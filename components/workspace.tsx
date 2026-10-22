@@ -72,13 +72,35 @@ import {
 } from "@/lib/data";
 import Diagram from "./diagram";
 import { SITE_NAME } from "@/lib/site";
+import {
+  ReviewBadge,
+  Provenance,
+  StructuredEntry,
+  ProjectHome,
+  ProjectSection,
+  ReviewGuide,
+} from "./project-library";
+import ProjectEditor from "./project-editor";
+import PrivateImport from "./private-import";
+import SystemComparison from "./system-comparison";
+import {
+  entryHref,
+  entrySection,
+  validateDetails,
+  documentCategories,
+  projectSections,
+} from "@/lib/project-content";
 const nav = [
-  { path: "/", label: "Overview", icon: LayoutDashboard },
-  { path: "/testers", label: "Bearing testers", icon: Database },
-  { path: "/bearings", label: "Bearing information", icon: CircleDot },
-  { path: "/suspension", label: "Primary suspension", icon: Layers3 },
-  { path: "/project", label: "Our design project", icon: Microscope },
-  { path: "/resources", label: "Documents & gallery", icon: FolderOpen },
+  { path: "/", label: "Home", icon: LayoutDashboard },
+  { path: "/project", label: "Project Overview", icon: Microscope },
+  { path: "/engineering", label: "Engineering Design", icon: Layers3 },
+  { path: "/bearings", label: "Passenger Bearing Research", icon: CircleDot },
+  { path: "/suspension", label: "Primary Suspension Research", icon: Activity },
+  { path: "/testers", label: "Existing Railway Testers", icon: Database },
+  { path: "/comparison", label: "Compare Systems", icon: GitCompareArrows },
+  { path: "/progress", label: "Project Progress", icon: Clock3 },
+  { path: "/team", label: "Our Team", icon: Users },
+  { path: "/resources", label: "Documents & Gallery", icon: FolderOpen },
 ];
 const kinds: Kind[] = [
   "tester",
@@ -94,16 +116,25 @@ const sectionKind: Record<string, Kind> = {
   project: "project",
   research: "research",
   updates: "update",
+  engineering: "project",
+  progress: "update",
+  team: "project",
+  calculations: "research",
 };
 const titles: Record<string, string> = {
   testers: "Bearing testers",
-  bearings: "Bearing information",
-  suspension: "Primary suspension",
-  project: "Our design project",
+  bearings: "Passenger Bearing Research",
+  suspension: "Primary Suspension Research",
+  project: "Project Overview",
   resources: "Documents & gallery",
   admin: "Content workspace",
   research: "Research library",
   updates: "Project updates",
+  engineering: "Engineering Design",
+  progress: "Project Progress",
+  team: "Our Team",
+  calculations: "Engineering Calculations",
+  comparison: "Compare Systems",
 };
 function Badge({
   children,
@@ -172,14 +203,15 @@ export default function Workspace() {
     resource: Resource;
   } | null>(null);
   const [globalSearch, setGlobalSearch] = useState("");
+  const [structuredEnabled, setStructuredEnabled] = useState(false);
   const editable = ["editor", "admin"].includes(role);
   const loadSequence = useRef(0);
-  const load = useCallback(async () => {
+  const load = useCallback(async (showLoading = true) => {
     if (!supabase) return;
     const sequence = ++loadSequence.current;
-    setLoading(true);
+    if (showLoading) setLoading(true);
     setError("");
-    const [e, r] = await Promise.all([
+    const [e, r, schema] = await Promise.all([
       supabase
         .from("entries")
         .select("*")
@@ -188,8 +220,13 @@ export default function Workspace() {
         .from("resources")
         .select("*")
         .order("created_at", { ascending: false }),
+      supabase
+        .from("entries")
+        .select("section,review_state,provenance,details")
+        .limit(0),
     ]);
     if (sequence !== loadSequence.current) return;
+    setStructuredEnabled(!schema.error);
     if (e.error || r.error) {
       setEntries([]);
       setResources([]);
@@ -260,7 +297,7 @@ export default function Workspace() {
   }, [notice]);
   const testers = entries.filter((e) => e.kind === "tester");
   const chosen = testers.filter((e) => selected.includes(e.id));
-  function blank(kind: Kind = "tester"): Entry {
+  function blank(kind: Kind = "tester", projectSection?: string): Entry {
     return {
       id: "",
       kind,
@@ -276,6 +313,23 @@ export default function Workspace() {
       visibility: "team",
       demo: false,
       updated_at: new Date().toISOString(),
+      ...(structuredEnabled
+        ? {
+            section:
+              projectSection ||
+              {
+                tester: "testers",
+                bearing: "bearings",
+                suspension: "suspension",
+                project: "overview",
+                research: "research",
+                update: "progress",
+              }[kind],
+            review_state: "pending" as const,
+            provenance: [],
+            details: {},
+          }
+        : {}),
     };
   }
   async function saveEntry(entry: Entry) {
@@ -386,6 +440,8 @@ export default function Workspace() {
             {r.status === "draft" ? " · Draft" : ""}
           </span>
           {r.tags.length > 0 && <small>{r.tags.join(" · ")}</small>}
+          {r.citation && <small>{r.citation}</small>}
+          {r.rights && <small>Reuse: {r.rights}</small>}
         </div>
         {(image || r.mime === "application/pdf") && (
           <button
@@ -434,13 +490,28 @@ export default function Workspace() {
           <span className="visual-number">
             FIG. {String(i + 1).padStart(2, "0")}
           </span>
-          <Diagram variant={i % 3} />
-          <span className="schematic-label">ILLUSTRATIVE CONCEPT</span>
+          {e.demo ? (
+            <Diagram variant={i % 3} />
+          ) : (
+            <div className="source-image-placeholder">
+              <TrainFront size={42} />
+              <span>Source image awaiting review</span>
+            </div>
+          )}
+          <span className="schematic-label">
+            {e.demo
+              ? "ILLUSTRATIVE CONCEPT"
+              : "SYSTEM / CONFIGURATION REFERENCE"}
+          </span>
         </Link>
         <div className="tester-card-body">
           <div className="card-kicker">
             <span>{e.category || "Uncategorized"}</span>
-            {e.demo && <Badge>Demo</Badge>}
+            {e.demo ? (
+              <Badge>Demo</Badge>
+            ) : (
+              <ReviewBadge state={e.review_state} />
+            )}
           </div>
           <Link href={`/testers/${e.id}`} className="card-title">
             {e.title}
@@ -499,7 +570,7 @@ export default function Workspace() {
         <div className="workspace-name">
           <div className="workspace-avatar">SD</div>
           <div>
-            Senior Design Team<small>Passenger rail research</small>
+            Team 15 — Sixth Gear<small>UTRGV · UTCRS</small>
           </div>
           <ChevronDown size={15} />
         </div>
@@ -530,14 +601,10 @@ export default function Workspace() {
           <span className="tiny-label">
             <span className="status-dot" /> OUR SENIOR DESIGN PROJECT
           </span>
-          <strong>From research to rail.</strong>
-          <p>A bearing test rig built on better engineering knowledge.</p>
-          <div className="mini-progress">
-            <span />
-          </div>
-          <div className="project-stage">
-            Current phase <b>Research & discovery</b>
-          </div>
+          <strong>Project development.</strong>
+          <p>
+            Passenger rail bearing tester research and design documentation.
+          </p>
           <Link href="/project">
             Explore our project <ArrowRight size={14} />
           </Link>
@@ -643,9 +710,8 @@ export default function Workspace() {
               <>
                 <Link
                   href={
-                    current.kind === "tester"
-                      ? "/testers"
-                      : `/${Object.keys(sectionKind).find((k) => sectionKind[k] === current.kind) || "research"}`
+                    entryHref(current).split("/").slice(0, -1).join("/") ||
+                    "/research"
                   }
                   className="back-link"
                 >
@@ -672,6 +738,7 @@ export default function Workspace() {
                 </div>
                 <div className="detail-meta">
                   <Badge tone="blue">{current.kind}</Badge>
+                  <ReviewBadge state={current.review_state} />
                   {current.demo && (
                     <Badge tone="amber">Demonstration · unverified</Badge>
                   )}
@@ -681,7 +748,7 @@ export default function Workspace() {
                     {current.status}
                   </span>
                 </div>
-                {current.kind === "tester" && (
+                {current.kind === "tester" && current.demo && (
                   <div className="detail-diagram">
                     <Diagram hero />
                   </div>
@@ -689,6 +756,8 @@ export default function Workspace() {
                 <div className="detail-columns">
                   <section className="panel article-panel">
                     <Markdown body={current.body} />
+                    <StructuredEntry entry={current} />
+                    <Provenance sources={current.provenance} />
                     {current.sources.length > 0 && (
                       <>
                         <h2>Sources & references</h2>
@@ -716,7 +785,11 @@ export default function Workspace() {
                   </section>
                   <aside className="panel specs-panel">
                     <div className="section-title">
-                      <h2>Technical specifications</h2>
+                      <h2>
+                        {current.kind === "tester"
+                          ? "Technical specifications"
+                          : "Engineering record"}
+                      </h2>
                       <button
                         className="unit-switch"
                         onClick={() => setImperial(!imperial)}
@@ -725,14 +798,29 @@ export default function Workspace() {
                         <ChevronDown size={12} />
                       </button>
                     </div>
-                    {specFields.map((f) => (
-                      <div className="spec-row" key={f.key}>
-                        <span>{f.label}</span>
-                        <strong>
-                          {displaySpec(f.key, current.specs[f.key], imperial)}
-                        </strong>
-                      </div>
-                    ))}
+                    {current.kind === "tester" ? (
+                      specFields.map((f) => (
+                        <div className="spec-row" key={f.key}>
+                          <span>{f.label}</span>
+                          <strong>
+                            {displaySpec(f.key, current.specs[f.key], imperial)}
+                          </strong>
+                        </div>
+                      ))
+                    ) : (
+                      <>
+                        <ReviewBadge state={current.review_state} />
+                        <p className="muted">
+                          Source dates, technical tables, candidate options, and
+                          decision history appear alongside this record. Review
+                          publication separately from engineering maturity.
+                        </p>
+                        <Link href="/calculations" className="text-link">
+                          Calculation index
+                          <ArrowRight size={14} />
+                        </Link>
+                      </>
+                    )}
                   </aside>
                 </div>
                 <section className="panel">
@@ -780,237 +868,20 @@ export default function Workspace() {
               </div>
             )
           ) : section === "overview" ? (
-            <>
-              <div className="page-heading overview-heading">
-                <div>
-                  <h1>Engineering starts with understanding.</h1>
-                  <p>
-                    Your research hub for passenger rail bearing testing and
-                    primary suspension.
-                  </p>
-                </div>
-                <Link className="button" href="/project">
-                  <Microscope size={16} />
-                  Our project
-                  <ArrowUpRight />
-                </Link>
-              </div>
-              <section className="hero">
-                <div className="hero-copy">
-                  <div className="hero-eyebrow">
-                    <span />
-                    PASSENGER RAIL RESEARCH
-                  </div>
-                  <h2>
-                    Better research.
-                    <br />
-                    Stronger design.
-                  </h2>
-                  <p>
-                    Explore bearing test systems, connect technical insights,
-                    and build the foundation for our next engineering solution.
-                  </p>
-                  <div className="hero-actions">
-                    <Link href="/testers" className="button light">
-                      Explore bearing testers
-                      <ArrowRight size={16} />
-                    </Link>
-                    <Link href="/project" className="hero-link">
-                      View our project
-                      <ArrowRight size={15} />
-                    </Link>
-                  </div>
-                  <div className="hero-footnote">
-                    <CircleDot size={13} />
-                    Passenger bearings <span>·</span>Primary suspension{" "}
-                    <span>·</span>Test rig design
-                  </div>
-                </div>
-                <div className="hero-art">
-                  <div className="drawing-label">
-                    DESIGN EXPLORATION <span>001 / CONCEPT</span>
-                  </div>
-                  <Diagram hero />
-                  <div className="drawing-footer">
-                    <span className="status-dot" />
-                    Single-bearing test arrangement<span>PRELIMINARY</span>
-                  </div>
-                </div>
-              </section>
-              <div className="stats-grid">
-                {[
-                  {
-                    icon: Database,
-                    n: testers.length,
-                    label: "Bearing testers",
-                    sub: "In the research database",
-                    href: "/testers",
-                    color: "blue",
-                  },
-                  {
-                    icon: BookOpen,
-                    n: entries.filter((e) =>
-                      ["bearing", "suspension", "research"].includes(e.kind),
-                    ).length,
-                    label: "Technical entries",
-                    sub: "Knowledge to build on",
-                    href: "/research",
-                    color: "teal",
-                  },
-                  {
-                    icon: FolderOpen,
-                    n: resources.length,
-                    label: "Research resources",
-                    sub: "Documents & engineering files",
-                    href: "/resources",
-                    color: "purple",
-                  },
-                  {
-                    icon: Microscope,
-                    n: "01",
-                    label: "Senior design project",
-                    sub: "Research & discovery phase",
-                    href: "/project",
-                    color: "orange",
-                  },
-                ].map((s) => (
-                  <Link href={s.href} key={s.label} className="stat-card">
-                    <span className={`stat-icon ${s.color}`}>
-                      <s.icon size={20} />
-                    </span>
-                    <ArrowUpRight />
-                    <strong>
-                      {typeof s.n === "number"
-                        ? s.n.toString().padStart(2, "0")
-                        : s.n}
-                    </strong>
-                    <b>{s.label}</b>
-                    <small>{s.sub}</small>
-                  </Link>
-                ))}
-              </div>
-              <section className="featured-section">
-                <div className="section-heading">
-                  <div>
-                    <div className="eyebrow">EXPLORE THE LANDSCAPE</div>
-                    <h2>Featured bearing testers</h2>
-                    <p>
-                      A starting point for comparing test approaches and
-                      capabilities.
-                    </p>
-                  </div>
-                  <Link href="/testers" className="text-link">
-                    View all testers
-                    <ArrowRight size={15} />
-                  </Link>
-                </div>
-                {!configured && (
-                  <div className="subtle-note">
-                    <CircleHelp size={14} />
-                    Example concepts for exploring the library. Technical
-                    ratings are intentionally left undocumented.
-                  </div>
-                )}
-                <div className="tester-grid">
-                  {testers.slice(0, 3).map(renderCard)}
-                </div>
-                {!testers.length && (
-                  <div className="empty">No testers published yet.</div>
-                )}
-              </section>
-              <div className="bottom-grid">
-                <section className="panel research-panel">
-                  <div className="panel-heading">
-                    <div>
-                      <span className="eyebrow">THE KNOWLEDGE LIBRARY</span>
-                      <h2>Recently added research</h2>
-                    </div>
-                    <Link href="/research" className="text-link">
-                      Browse library
-                      <ArrowRight size={14} />
-                    </Link>
-                  </div>
-                  {entries
-                    .filter((e) =>
-                      ["bearing", "research", "suspension"].includes(e.kind),
-                    )
-                    .slice(0, 3)
-                    .map((e) => (
-                      <Link
-                        className="research-row"
-                        key={e.id}
-                        href={`/${Object.keys(sectionKind).find((k) => sectionKind[k] === e.kind) || "research"}/${e.id}`}
-                      >
-                        <div className="file-icon">
-                          <FileText size={20} />
-                        </div>
-                        <div>
-                          <strong>{e.title}</strong>
-                          <span>
-                            {e.category} <i>·</i>{" "}
-                            {e.demo ? "Example research" : "Research entry"}
-                          </span>
-                        </div>
-                        <ChevronRight size={16} />
-                      </Link>
-                    ))}
-                </section>
-                <section className="panel project-panel">
-                  <div className="panel-heading">
-                    <div>
-                      <span className="eyebrow">FROM CONCEPT TO PROTOTYPE</span>
-                      <h2>Our design journey</h2>
-                    </div>
-                    <Badge tone="green">In progress</Badge>
-                  </div>
-                  {entries.some((e) => e.kind === "update") ? (
-                    <ProjectUpdates entries={entries} />
-                  ) : (
-                    <div className="timeline-mini">
-                      <div className="timeline-node complete">
-                        <Check size={12} />
-                      </div>
-                      <div>
-                        <strong>Define the challenge</strong>
-                        <p>Single-bearing tester with primary suspension</p>
-                      </div>
-                      <div className="timeline-node current">
-                        <span />
-                      </div>
-                      <div>
-                        <strong>Research & discovery</strong>
-                        <p>Exploring equipment and suspension concepts</p>
-                      </div>
-                      <div className="timeline-node" />
-                      <div>
-                        <strong>Concept development</strong>
-                        <p>Next: evaluate and select design approaches</p>
-                      </div>
-                    </div>
-                  )}
-                  <Link className="text-link" href="/project">
-                    Follow project progress
-                    <ArrowRight size={14} />
-                  </Link>
-                </section>
-              </div>
-              <section className="quick-strip">
-                <div>
-                  <BookOpen size={21} />
-                  <div>
-                    <strong>A shared foundation for better decisions.</strong>
-                    <p>
-                      Capture sources. Document what is known. Make room for
-                      what comes next.
-                    </p>
-                  </div>
-                </div>
-                <Link href="/admin" className="text-link">
-                  Contribute research
-                  <ArrowRight size={15} />
-                </Link>
-              </section>
-            </>
+            <ProjectHome
+              entries={entries}
+              resources={resources}
+              renderTester={renderCard}
+            />
+          ) : section === "comparison" ? (
+            <SystemComparison
+              entries={entries}
+              selected={selected}
+              onToggle={toggle}
+              imperial={imperial}
+              onUnit={() => setImperial(!imperial)}
+              onExport={() => downloadCsv(chosen, imperial)}
+            />
           ) : section === "testers" ? (
             <>
               <div className="page-heading">
@@ -1218,8 +1089,8 @@ export default function Workspace() {
                   )}
                   onOpen={(r) => openResource(r)}
                 />
-                {resources
-                  .filter(
+                <ResourceGroups
+                  resources={resources.filter(
                     (r) =>
                       `${r.name} ${r.caption} ${r.category} ${r.tags.join(" ")}`
                         .toLowerCase()
@@ -1231,8 +1102,9 @@ export default function Workspace() {
                             ? r.mime === "application/pdf"
                             : !r.mime.startsWith("image/") &&
                               r.mime !== "application/pdf")),
-                  )
-                  .map(renderResource)}
+                  )}
+                  renderResource={renderResource}
+                />
                 {!resources.length && (
                   <div className="empty">
                     <div className="empty-icon">
@@ -1295,6 +1167,14 @@ export default function Workspace() {
               </div>
               <BackendStatus editable={editable} />
               {editable && <AdminVerification />}
+              {editable && <PrivateImport onDone={() => load(false)} />}
+              {editable && !structuredEnabled && (
+                <div className="alert">
+                  Project content fields require the additive migration:
+                  supabase/migrations/202610_project_content.sql. Existing
+                  content remains accessible; do not rerun the initial schema.
+                </div>
+              )}
               {!configured ? (
                 <section className="panel setup-panel">
                   <div className="empty-icon">
@@ -1426,13 +1306,27 @@ export default function Workspace() {
                 </>
               )}
             </>
+          ) : ["engineering", "progress", "team", "calculations"].includes(
+              section,
+            ) ? (
+            <ProjectSection
+              key={section}
+              section={section}
+              entries={entries}
+              onEdit={editable ? setEditor : undefined}
+              onNew={
+                editable
+                  ? () => setEditor(blank(sectionKind[section], section))
+                  : undefined
+              }
+            />
           ) : sectionKind[section] ? (
             <>
               <div className="page-heading">
                 <div>
                   <div className="eyebrow">
                     {section === "project"
-                      ? "SENIOR DESIGN · PRELIMINARY"
+                      ? "PROJECT PURPOSE & SCOPE"
                       : "TECHNICAL KNOWLEDGE LIBRARY"}
                   </div>
                   <h1>{titles[section]}</h1>
@@ -1454,85 +1348,34 @@ export default function Workspace() {
                   </button>
                 )}
               </div>
-              {section === "project" && (
-                <>
-                  <div className="project-banner">
-                    <div>
-                      <Badge tone="blue">Research & discovery</Badge>
-                      <h2>One bearing. A system of possibilities.</h2>
-                      <p>
-                        Controlled rotation, vertical loading, and
-                        representative primary suspension.
-                      </p>
-                      <span>
-                        <CircleHelp size={15} />
-                        All design considerations are preliminary. Suspension
-                        arrangement is under investigation.
-                      </span>
-                    </div>
-                    <Diagram hero />
-                  </div>
-                  <div className="milestone-grid">
-                    {[
-                      "Problem definition",
-                      "Research & discovery",
-                      "Concept selection",
-                      "Detailed design",
-                      "Build & validation",
-                    ].map((m, i) => (
-                      <div
-                        key={m}
-                        className={i < 2 ? "milestone active" : "milestone"}
-                      >
-                        <span>
-                          {i === 0 ? (
-                            <Check size={14} />
-                          ) : (
-                            String(i + 1).padStart(2, "0")
-                          )}
-                        </span>
-                        <strong>{m}</strong>
-                        <small>
-                          {i === 0
-                            ? "Initial scope captured"
-                            : i === 1
-                              ? "Current phase"
-                              : "Planned"}
-                        </small>
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
-              {section === "project" &&
-                entries.some((e) => e.kind === "update") && (
-                  <section className="panel">
-                    <div className="panel-heading">
-                      <h2>Project progress & updates</h2>
-                      {editable && (
-                        <button
-                          className="button"
-                          onClick={() => setEditor(blank("update"))}
-                        >
-                          <Plus size={14} />
-                          Add update
-                        </button>
-                      )}
-                    </div>
-                    <ProjectUpdates entries={entries} />
-                  </section>
-                )}
               <div className="article-grid">
                 {entries
-                  .filter((e) => e.kind === sectionKind[section])
+                  .filter((e) =>
+                    section === "project"
+                      ? e.kind === "project" &&
+                        !["engineering", "team"].includes(e.section || "")
+                      : section === "research"
+                        ? ["bearing", "suspension", "research"].includes(
+                            e.kind,
+                          ) ||
+                          Boolean(
+                            e.section &&
+                            !projectSections.some((s) => s.id === e.section),
+                          )
+                        : e.kind === sectionKind[section],
+                  )
                   .map((e) => (
                     <article className="panel knowledge-card" key={e.id}>
                       <div className="card-kicker">
                         <span>{e.category}</span>
-                        {e.demo && <Badge>Demo</Badge>}
+                        {e.demo ? (
+                          <Badge>Demo</Badge>
+                        ) : (
+                          <ReviewBadge state={e.review_state} />
+                        )}
                       </div>
                       <h2>
-                        <Link href={`/${section}/${e.id}`}>{e.title}</Link>
+                        <Link href={entryHref(e)}>{e.title}</Link>
                       </h2>
                       <p>{e.summary}</p>
                       <div className="tags">
@@ -1547,10 +1390,7 @@ export default function Workspace() {
                         <Markdown body={e.body} />
                       </details>
                       <div className="knowledge-footer">
-                        <Link
-                          href={`/${section}/${e.id}`}
-                          className="text-link"
-                        >
+                        <Link href={entryHref(e)} className="text-link">
                           Open full entry
                           <ArrowRight size={14} />
                         </Link>
@@ -1602,6 +1442,7 @@ export default function Workspace() {
               <Link href="/">Return to overview</Link>
             </div>
           )}
+          <ReviewGuide />
           <footer className="footer">
             <span>
               {SITE_NAME} <i>/</i> Passenger Rail Engineering Research
@@ -1657,8 +1498,8 @@ export default function Workspace() {
         >
           <div className="comparison-actions">
             <p>
-              Unknown specifications remain undocumented. Verify original
-              sources before design use.
+              Unknown specifications remain undocumented. Compare each system’s
+              test scope and original sources before drawing design conclusions.
             </p>
             <button className="button" onClick={() => setImperial(!imperial)}>
               {imperial ? "Imperial" : "SI units"}
@@ -1686,6 +1527,16 @@ export default function Workspace() {
               </thead>
               <tbody>
                 <tr>
+                  <td>System classification</td>
+                  {chosen.map((e) => (
+                    <td key={e.id}>
+                      {e.category || "Pending classification"}
+                      <br />
+                      <ReviewBadge state={e.review_state} />
+                    </td>
+                  ))}
+                </tr>
+                <tr>
                   <td>Organization</td>
                   {chosen.map((e) => (
                     <td key={e.id}>{e.organization || "Not documented"}</td>
@@ -1712,11 +1563,13 @@ export default function Workspace() {
           categories={entries.map((e) => e.category)}
           onSave={saveEntry}
           onClose={() => setEditor(null)}
+          structuredEnabled={structuredEnabled}
         />
       )}
       {uploading && (
         <UploadDialog
           entries={entries}
+          structuredEnabled={structuredEnabled}
           onClose={() => setUploading(false)}
           onDone={async () => {
             setUploading(false);
@@ -1729,6 +1582,7 @@ export default function Workspace() {
         <ResourceEditor
           resource={resourceEdit}
           entries={entries}
+          structuredEnabled={structuredEnabled}
           onClose={() => setResourceEdit(null)}
           onDone={async () => {
             setResourceEdit(null);
@@ -1920,11 +1774,13 @@ function EntryEditor({
   categories,
   onSave,
   onClose,
+  structuredEnabled,
 }: {
   entry: Entry;
   categories: string[];
   onSave: (e: Entry) => Promise<void>;
   onClose: () => void;
+  structuredEnabled: boolean;
 }) {
   const [value, setValue] = useState({ ...entry, specs: { ...entry.specs } });
   const [sources, setSources] = useState(
@@ -1984,6 +1840,33 @@ function EntryEditor({
     ) {
       setError("Numeric specifications must be nonnegative.");
       return;
+    }
+    if (structuredEnabled) {
+      try {
+        validateDetails(value.details || {});
+        if (
+          (value.provenance || []).some(
+            (c) =>
+              !c.document.trim() ||
+              !c.locator.trim() ||
+              (c.url && !/^https?:\/\//i.test(c.url)),
+          )
+        )
+          throw new Error(
+            "Citations need a source document, page/section location, and a valid optional URL.",
+          );
+        if (
+          value.status === "published" &&
+          !parsed.length &&
+          !value.provenance?.length
+        )
+          throw new Error(
+            "Add source provenance or a reference before publishing an engineering record.",
+          );
+      } catch (e) {
+        setError((e as Error).message);
+        return;
+      }
     }
     setBusy(true);
     try {
@@ -2069,6 +1952,14 @@ function EntryEditor({
             />
           </label>
         </div>
+        {structuredEnabled && (
+          <ProjectEditor
+            entry={value}
+            onChange={(changes) =>
+              setValue((prev) => ({ ...prev, ...changes }))
+            }
+          />
+        )}
         <div className="rich-label">
           Research notes <span>Markdown formatting · HTML is disabled</span>
         </div>
@@ -2203,10 +2094,12 @@ function EntryEditor({
 }
 function UploadDialog({
   entries,
+  structuredEnabled,
   onClose,
   onDone,
 }: {
   entries: Entry[];
+  structuredEnabled: boolean;
   onClose: () => void;
   onDone: () => Promise<void>;
 }) {
@@ -2217,6 +2110,17 @@ function UploadDialog({
     e.preventDefault();
     if (!supabase || !files.length) return;
     const form = new FormData(e.currentTarget);
+    if (
+      structuredEnabled &&
+      form.get("visibility") === "public" &&
+      form.get("status") === "published" &&
+      !["team-owned", "permission-granted"].includes(String(form.get("rights")))
+    ) {
+      setError(
+        "Confirm ownership or reuse permission before publishing attachments publicly.",
+      );
+      return;
+    }
     const invalid = files.map((f) => validateFile(f)).find(Boolean);
     if (invalid) {
       setError(invalid);
@@ -2249,6 +2153,9 @@ function UploadDialog({
           entry_id: form.get("entry_id") || null,
           visibility: form.get("visibility"),
           status: form.get("status"),
+          ...(structuredEnabled
+            ? { citation: form.get("citation"), rights: form.get("rights") }
+            : {}),
         });
         if (insert.error) {
           await supabase.storage.from("research-files").remove([path]);
@@ -2288,7 +2195,10 @@ function UploadDialog({
             <small>{(f.size / 1024 / 1024).toFixed(2)} MB</small>
           </div>
         ))}
-        <AttachmentFields entries={entries} />
+        <AttachmentFields
+          entries={entries}
+          structuredEnabled={structuredEnabled}
+        />
         {error && (
           <p className="form-error" role="alert">
             {error}
@@ -2309,9 +2219,11 @@ function UploadDialog({
 function AttachmentFields({
   entries,
   resource,
+  structuredEnabled,
 }: {
   entries: Entry[];
   resource?: Resource;
+  structuredEnabled: boolean;
 }) {
   return (
     <>
@@ -2322,13 +2234,51 @@ function AttachmentFields({
       <div className="form-grid">
         <label>
           Category
-          <input name="category" defaultValue={resource?.category} />
+          <input
+            name="category"
+            list="document-categories"
+            defaultValue={resource?.category}
+          />
+          <datalist id="document-categories">
+            {documentCategories.map((c) => (
+              <option key={c}>{c}</option>
+            ))}
+          </datalist>
         </label>
         <label>
           Tags (comma separated)
           <input name="tags" defaultValue={resource?.tags.join(", ")} />
         </label>
       </div>
+      {structuredEnabled && (
+        <>
+          <label>
+            Figure / document citation
+            <textarea
+              name="citation"
+              rows={2}
+              defaultValue={resource?.citation}
+              placeholder="Original caption, creator, source document, page/figure number, and date"
+            />
+          </label>
+          <label>
+            Reuse rights
+            <select
+              name="rights"
+              defaultValue={resource?.rights || "review-required"}
+            >
+              <option value="review-required">
+                Permission / review required
+              </option>
+              <option value="team-owned">Team-owned and approved</option>
+              <option value="permission-granted">
+                Reuse permission confirmed
+              </option>
+              <option value="link-only">Link to original only</option>
+            </select>
+          </label>
+        </>
+      )}
       <label>
         Related research entry
         <select name="entry_id" defaultValue={resource?.entry_id || ""}>
@@ -2369,11 +2319,13 @@ function AttachmentFields({
 function ResourceEditor({
   resource,
   entries,
+  structuredEnabled,
   onClose,
   onDone,
 }: {
   resource: Resource;
   entries: Entry[];
+  structuredEnabled: boolean;
   onClose: () => void;
   onDone: () => Promise<void>;
 }) {
@@ -2384,6 +2336,18 @@ function ResourceEditor({
     setBusy(true);
     setError("");
     const f = new FormData(e.currentTarget);
+    if (
+      structuredEnabled &&
+      f.get("visibility") === "public" &&
+      f.get("status") === "published" &&
+      !["team-owned", "permission-granted"].includes(String(f.get("rights")))
+    ) {
+      setError(
+        "Confirm ownership or reuse permission before public publication.",
+      );
+      setBusy(false);
+      return;
+    }
     const { error } = await supabase!
       .from("resources")
       .update({
@@ -2396,6 +2360,9 @@ function ResourceEditor({
         entry_id: f.get("entry_id") || null,
         visibility: f.get("visibility"),
         status: f.get("status"),
+        ...(structuredEnabled
+          ? { citation: f.get("citation"), rights: f.get("rights") }
+          : {}),
       })
       .eq("id", resource.id)
       .select("id")
@@ -2408,7 +2375,11 @@ function ResourceEditor({
     <Modal title="Edit attachment information" onClose={onClose}>
       <form className="editor-form" onSubmit={submit}>
         <p>{resource.name}</p>
-        <AttachmentFields resource={resource} entries={entries} />
+        <AttachmentFields
+          resource={resource}
+          entries={entries}
+          structuredEnabled={structuredEnabled}
+        />
         {error && (
           <p className="form-error" role="alert">
             {error}
@@ -2522,5 +2493,29 @@ function ImageTile({
       <strong>{resource.caption || resource.name}</strong>
       <small>{resource.category || "Research image"} · Click to enlarge</small>
     </button>
+  );
+}
+
+function ResourceGroups({
+  resources,
+  renderResource,
+}: {
+  resources: Resource[];
+  renderResource: (r: Resource) => React.ReactNode;
+}) {
+  const categories = [
+    ...new Set(resources.map((r) => r.category || "Uncategorized")),
+  ].sort();
+  return (
+    <>
+      {categories.map((category) => (
+        <section key={category} className="resource-group">
+          <h3>{category}</h3>
+          {resources
+            .filter((r) => (r.category || "Uncategorized") === category)
+            .map(renderResource)}
+        </section>
+      ))}
+    </>
   );
 }

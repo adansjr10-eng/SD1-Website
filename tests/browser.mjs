@@ -14,12 +14,12 @@ import assert from "node:assert/strict";
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto(process.env.BASE_URL || "http://127.0.0.1:3000");
   await page
-    .getByRole("heading", { name: "Engineering starts with understanding." })
+    .getByRole("heading", {
+      name: "Design and Development of a Passenger Rail Bearing Tester",
+    })
     .waitFor();
   await page.screenshot({ path: "/tmp/rail-desktop.png", fullPage: true });
-  await page
-    .getByRole("link", { name: "Explore bearing testers", exact: true })
-    .click();
+  await page.getByRole("link", { name: "Open database", exact: true }).click();
   await page
     .getByRole("heading", { name: "Passenger bearing testers", exact: true })
     .waitFor();
@@ -62,6 +62,25 @@ import assert from "node:assert/strict";
   );
   await page.getByRole("button", { name: "Close dialog" }).click();
   await page.getByRole("button", { name: "Clear", exact: true }).click();
+  await page.goto(
+    (process.env.BASE_URL || "http://127.0.0.1:3000") + "/comparison",
+  );
+  await page.locator(".comparison-picker input").nth(0).check();
+  await page.locator(".comparison-picker input").nth(1).check();
+  await page
+    .getByRole("heading", {
+      name: "Scope, evidence & specifications",
+      exact: true,
+    })
+    .waitFor();
+  await page
+    .getByRole("cell", { name: "Component testing", exact: true })
+    .waitFor();
+  await page.getByRole("button", { name: "Clear", exact: true }).click();
+  await page.goto(
+    (process.env.BASE_URL || "http://127.0.0.1:3000") + "/testers",
+  );
+
   await page
     .getByRole("link", { name: "Single-bearing test rig", exact: true })
     .click();
@@ -72,9 +91,13 @@ import assert from "node:assert/strict";
     .getByRole("heading", { name: "Technical specifications" })
     .waitFor();
   for (const [url, heading] of [
-    ["/bearings", "Bearing information"],
-    ["/suspension", "Primary suspension"],
-    ["/project", "Our design project"],
+    ["/bearings", "Passenger Bearing Research"],
+    ["/suspension", "Primary Suspension Research"],
+    ["/project", "Project Overview"],
+    ["/engineering", "Engineering Design"],
+    ["/progress", "Project Progress"],
+    ["/team", "Our Team"],
+    ["/calculations", "Engineering Calculations"],
     ["/resources", "Documents & image gallery"],
     ["/admin", "Content workspace"],
   ]) {
@@ -87,6 +110,14 @@ import assert from "node:assert/strict";
       .isVisible(),
   );
   await page.goto(
+    (process.env.BASE_URL || "http://127.0.0.1:3000") + "/calculations",
+  );
+  await page.getByLabel("Vehicle speed (mph)", { exact: true }).fill("60");
+  await page
+    .getByLabel("Effective wheel diameter (in)", { exact: true })
+    .fill("36");
+  await page.getByText(/560.23 RPM/).waitFor();
+  await page.goto(
     (process.env.BASE_URL || "http://127.0.0.1:3000") + "/resources",
   );
   await page.getByRole("button", { name: "Upload resources" }).click();
@@ -94,7 +125,9 @@ import assert from "node:assert/strict";
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(process.env.BASE_URL || "http://127.0.0.1:3000");
   await page
-    .getByRole("heading", { name: "Engineering starts with understanding." })
+    .getByRole("heading", {
+      name: "Design and Development of a Passenger Rail Bearing Tester",
+    })
     .waitFor();
   await page.screenshot({ path: "/tmp/rail-mobile.png", fullPage: true });
   assert.ok(
@@ -105,7 +138,7 @@ import assert from "node:assert/strict";
   await page.getByRole("button", { name: "Open navigation" }).click();
   await page
     .getByRole("navigation", { name: "Main navigation" })
-    .getByRole("link", { name: "Bearing testers" })
+    .getByRole("link", { name: "Existing Railway Testers" })
     .click();
   await page
     .getByRole("heading", { name: "Passenger bearing testers", exact: true })
@@ -117,7 +150,7 @@ import assert from "node:assert/strict";
   );
   assert.deepEqual(errors, []);
   console.log(
-    "PASS: dashboard, search, advanced filters, comparison, CSV download, detail page, five sections, backend empty state, mobile navigation, and no browser errors.",
+    "PASS: dashboard, search, advanced filters, comparison, CSV download, detail page, nine project sections and calculation inputs, backend empty state, mobile navigation, and no browser errors.",
   );
   await browser.close();
 })().catch((e) => {

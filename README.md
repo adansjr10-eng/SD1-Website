@@ -1,6 +1,8 @@
-# SixthGearSeniorDesign-PassengerBearingTester
+# PBT
 
 Passenger rail bearing tester and primary suspension engineering knowledge base, built with Next.js 16, React 19, TypeScript, Tailwind CSS 4, and Supabase.
+
+For the new engineering sections, additive migration, private draft import, and editorial review workflow, see [docs/PROJECT_CONTENT.md](docs/PROJECT_CONTENT.md).
 
 For the GitHub → Vercel deployment process, see [DEPLOYMENT.md](DEPLOYMENT.md). For local testing and the administrator acceptance workflow, see [PREVIEW.md](PREVIEW.md).
 
@@ -75,8 +77,8 @@ For a manual acceptance test, sign in as an editor, create a tester draft, enter
 - The research-note editor provides Markdown bold, italic, headings, lists, links, and preview. HTML is disabled. References must be HTTP(S) URLs.
 - Unknown technical specifications should stay blank. Numeric values are stored as RPM, km/h, and kN. Comparison display supports mph and lbf. Dimensions/footprint is free text: record explicit units such as mm or inches; automatic dimension conversion is not performed.
 - Drafts are visible only to editors/admins. Viewers can access published team records. Anonymous visitors see published public records.
-- Project sections can be separate entries, or headings in the original project brief. Add `update` entries for dated progress notes; published updates appear on the design timeline. Project phase milestones are illustrative scaffolding until updates are added.
-- Upload multiple images, PDFs, CAD, spreadsheets, or notes; set captions, category, tags, linked entry, visibility, and publication status. Attachment metadata can be edited from its row in the resource library.
+- Project sections can be separate entries, or headings in the original project brief. Add `update` entries for dated progress notes; published updates appear on the design timeline. The progress timeline uses activity dates entered by the team; unknown dates remain unspecified.
+- Upload multiple images, PDFs, presentations (after the project-content migration), CAD, spreadsheets, or notes; set captions, category, tags, linked entry, visibility, and publication status. Attachment metadata can be edited from its row in the resource library.
 - Files persist in Supabase Storage; metadata persists in PostgreSQL. Images open in a zoomable preview and PDFs in a browser frame. Other attachments are downloaded. Browser support determines PDF rendering.
 - Replace a file by uploading its replacement, checking it, then deleting the outdated attachment. Removing an entry with attachments is blocked until attachments are explicitly reassigned or deleted.
 - A linked attachment is publicly readable only when **both** the attachment and parent entry are public and published. Do not unlink a confidential file and publish it as public accidentally.

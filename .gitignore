@@ -10,3 +10,6 @@ test-results/
 # Generated Next.js declarations and local verification output
 next-env.d.ts
 *.log
+
+# Private document extracts and review bundles must not enter public Git/Vercel artifacts
+private-imports/

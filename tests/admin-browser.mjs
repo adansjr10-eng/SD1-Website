@@ -17,6 +17,7 @@ try {
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
   const storedFiles = new Map();
+  const importLedger = new Set();
   let memberRole = "editor";
   let entries = [],
     resources = [];
@@ -76,7 +77,26 @@ try {
         images_allowed: true,
         pdf_allowed: true,
       };
-    else if (url.pathname.includes("/rest/v1/entries")) {
+    else if (url.pathname.includes("/rpc/import_project_drafts")) {
+      let inserted = 0,
+        skipped = 0;
+      for (const item of req.postDataJSON().items) {
+        if (importLedger.has(item.import_key)) {
+          skipped++;
+          continue;
+        }
+        importLedger.add(item.import_key);
+        entries.push({
+          ...item,
+          id: crypto.randomUUID(),
+          updated_at: new Date().toISOString(),
+          status: "draft",
+          visibility: "team",
+        });
+        inserted++;
+      }
+      data = { inserted, skipped };
+    } else if (url.pathname.includes("/rest/v1/entries")) {
       if (method === "GET") {
         const id = url.searchParams.get("id")?.slice(3);
         let visible =
@@ -233,6 +253,15 @@ try {
     .getByRole("button", { name: "Edit Contract test rig", exact: true })
     .click();
   await page.getByLabel("Rotational speed (RPM)", { exact: true }).fill("500");
+  await page
+    .getByRole("button", { name: "Add source citation", exact: true })
+    .click();
+  await page
+    .getByLabel("Source document", { exact: true })
+    .fill("Synthetic source");
+  await page
+    .getByLabel("Page / slide / section", { exact: true })
+    .fill("Test section");
   await page.getByLabel("Publication status").selectOption("published");
   await page.getByLabel("Visibility").selectOption("public");
   await page
@@ -321,6 +350,129 @@ try {
   assert.equal(entries.length, 0);
   assert.equal(resources.length, 0);
   assert.equal(storedFiles.size, 0);
+  await page.getByText("Open import preparation", { exact: true }).click();
+  const bundle = {
+    format: "pbt-private-drafts-v1",
+    title: "Synthetic import",
+    source_date: "2026-10",
+    warnings: ["Synthetic test content"],
+    entries: [
+      {
+        import_key: "pbt:browser-import",
+        kind: "project",
+        title: "Browser imported draft",
+        organization: "Test team",
+        category: "engineering",
+        summary: "Synthetic research",
+        body: "Synthetic body",
+        section: "engineering",
+        review_state: "preliminary",
+        provenance: [
+          {
+            document: "Synthetic source",
+            date: "2026-10",
+            locator: "Section 1",
+          },
+        ],
+        details: {
+          functions: ["Rotate bearing", "Apply load"],
+          rows: [
+            {
+              label: "Load envelope",
+              value: "Pending source review",
+              state: "pending",
+            },
+          ],
+          options: [
+            {
+              function: "Apply load",
+              candidate: "Synthetic hydraulic candidate",
+              reason: "Awaiting validation",
+              state: "preliminary",
+            },
+          ],
+        },
+        specs: {},
+        tags: [],
+        sources: [],
+        status: "draft",
+        visibility: "team",
+        demo: false,
+      },
+    ],
+  };
+  await page
+    .getByLabel("Owner brief or reviewed bundle", { exact: true })
+    .fill(JSON.stringify(bundle));
+  await page
+    .getByRole("button", { name: "Preview draft plan", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Import 1 team-only drafts", exact: true })
+    .click();
+  await page
+    .getByText(
+      "1 team-only drafts inserted; 0 existing import keys skipped. Nothing was published.",
+      { exact: true },
+    )
+    .waitFor();
+  await page
+    .getByRole("button", { name: "Import 1 team-only drafts", exact: true })
+    .click();
+  await page
+    .getByText(
+      "0 team-only drafts inserted; 1 existing import keys skipped. Nothing was published.",
+      { exact: true },
+    )
+    .waitFor();
+  assert.equal(entries.length, 1);
+  assert.equal(entries[0].visibility, "team");
+  assert.equal(entries[0].status, "draft");
+  await page.goto("http://localhost:3001/engineering");
+  await page
+    .getByRole("heading", { name: "Browser imported draft", exact: true })
+    .waitFor();
+  await page.getByRole("button", { name: "Edit", exact: true }).click();
+  await page
+    .getByLabel("Value / uncertainty", { exact: true })
+    .fill("Editor-reviewed pending range");
+  await page
+    .getByLabel("Development stage", { exact: true })
+    .fill("Synthetic review stage");
+  await page.getByRole("button", { name: "Save draft", exact: true }).click();
+  await page.getByText("Entry saved successfully.", { exact: true }).waitFor();
+  assert.equal(
+    entries[0].details.rows[0].value,
+    "Editor-reviewed pending range",
+  );
+  await page
+    .getByRole("link", { name: "Browser imported draft", exact: true })
+    .click();
+  await page
+    .getByRole("cell", { name: "Editor-reviewed pending range", exact: true })
+    .waitFor();
+  await page
+    .getByRole("heading", {
+      name: "Functional decomposition — WHAT",
+      exact: true,
+    })
+    .waitFor();
+  await page
+    .getByRole("cell", { name: "Synthetic hydraulic candidate", exact: true })
+    .waitFor();
+  await page.reload();
+  await page
+    .getByRole("cell", { name: "Editor-reviewed pending range", exact: true })
+    .waitFor();
+  await page.goto("http://localhost:3001");
+  // An engineering record must never become the homepage overview by fallback.
+  await page
+    .getByRole("heading", {
+      name: "Design and Development of a Passenger Rail Bearing Tester",
+      exact: true,
+    })
+    .waitFor();
+  await page.goto("http://localhost:3001/admin");
   memberRole = "viewer";
   await page.getByRole("button", { name: "Sign out", exact: true }).click();
   await page
@@ -348,7 +500,7 @@ try {
   );
   assert.deepEqual(errors, []);
   console.log(
-    "PASS: contract-mocked login, draft creation, editing, publication, multi-file upload requests, image preview and zoom, resource deletion, entry deletion, resource reload, configuration diagnostics, signed-in persistence verification, sign-out, and viewer access restrictions.",
+    "PASS: contract-mocked login, draft creation, editing, publication, multi-file upload requests, image preview and zoom, resource deletion, entry deletion, resource reload, private draft import and duplicate skips, configuration diagnostics, signed-in persistence verification, sign-out, and viewer access restrictions.",
   );
 } finally {
   await browser.close();
