@@ -13,7 +13,8 @@
     "check:supabase": "tsx scripts/check-supabase.ts",
     "test:supabase": "tsx scripts/test-supabase.ts",
     "prebuild": "tsx scripts/validate-deployment.ts",
-    "content:prepare": "tsx scripts/prepare-project-drafts.ts"
+    "content:prepare": "tsx scripts/prepare-project-drafts.ts",
+    "test:browser:recovery": "node tests/recovery-browser.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.0.0",

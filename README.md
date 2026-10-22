@@ -41,6 +41,8 @@ Without Supabase variables, the site runs in **read-only demonstration mode**. S
 
 In restricted cloud networking, allow your exact `<project-ref>.supabase.co` hostname (or configured custom Supabase hostname) for authentication, REST, and storage. Package installation uses `registry.npmjs.org`. Publishing environment variables does not create database tables, storage buckets, or authorized team users. Check these separately before using the admin workspace. The application refuses malformed URLs and privileged browser keys instead of silently showing demonstration data for an invalid backend.
 
+Password recovery is available through **Admin workspace → Forgot your password?**. See [the recovery setup and acceptance guide](docs/PASSWORD_RECOVERY.md) for the production redirect URL and testing steps.
+
 ## Check the Supabase connection
 
 Open **Admin workspace → Supabase connection checks → Check connection**. Signed-in editors/admins can also use **Run storage & persistence test** to run the real upload and database verification with their current session; no separate test password needs to be shared. The panel reports configuration, research-table access, authentication state, and (for authorized editors/admins) RLS/policy presence and private bucket settings. Policy-name checks are configuration evidence; they do not replace access tests. Bucket checks do not write files or prove persistence. Anonymous users cannot inspect private bucket metadata.
