@@ -1,4 +1,4 @@
-# Publish SixthGearSeniorDesign-PassengerBearingTester with GitHub and Vercel
+# Publish PBT with GitHub and Vercel
 
 Repository: [adansjr10-eng/SD1-Website](https://github.com/adansjr10-eng/SD1-Website).
 
@@ -6,9 +6,9 @@ No ZIP download, local installation, Supabase service-role key, or Vercel token 
 
 ## 1. Review and merge the website
 
-Review the `feat/rail-lab-vercel-deployment` branch's pull request and merge it into `main`. The branch includes the complete Next.js application, Supabase schema and policy files, tests, and deployment configuration. It is based on the existing `main` history; no force-push is needed.
+Review and merge the current website pull request into `main`. The project-library improvements are on `feat/pbt-project-library`. Review its [project-content rollout instructions](docs/PROJECT_CONTENT.md), then apply the additive Supabase migration before importing any drafts. Do not rerun the original schema or seed over existing research.
 
-If a pull request could not be created automatically, visit the repository's **Pull requests → New pull request**, choose **base: main** and **compare: feat/rail-lab-vercel-deployment**, then create and review it. Use a title such as **Launch SixthGearSeniorDesign-PassengerBearingTester research website with Supabase and Vercel**.
+If Vercel is already connected, use its existing project and domains. Open the pull request's Vercel preview to review the interface; merging triggers the normal production deployment. There is no need to import the repository again. The instructions below also cover a first deployment.
 
 ## 2. Import the repository into Vercel
 

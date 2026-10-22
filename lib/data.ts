@@ -1,3 +1,4 @@
+import type { Citation, ProjectDetails, ReviewState } from "./project-content";
 export type Kind =
   "tester" | "bearing" | "suspension" | "project" | "research" | "update";
 export type Spec = {
@@ -29,6 +30,10 @@ export type Entry = {
   visibility: "public" | "team";
   demo: boolean;
   updated_at: string;
+  section?: string;
+  review_state?: ReviewState;
+  provenance?: Citation[];
+  details?: ProjectDetails;
 };
 export type Resource = {
   id: string;
@@ -43,6 +48,8 @@ export type Resource = {
   visibility: "public" | "team";
   status: "draft" | "published";
   created_at: string;
+  citation?: string;
+  rights?: string;
 };
 const base = {
   organization: "Demonstration entry",
@@ -206,11 +213,28 @@ export function comparisonCsv(entries: Entry[], imperial: boolean) {
     ["Specification", ...entries.map((e) => e.title)],
     ["Organization", ...entries.map((e) => e.organization)],
     [
+      "System classification",
+      ...entries.map((e) => e.category || "Pending classification"),
+    ],
+    ["Engineering review", ...entries.map((e) => e.review_state || "pending")],
+    [
       "Content",
       ...entries.map((e) =>
         e.demo ? "Demonstration — unverified" : "Research entry",
       ),
     ],
+    ...[
+      ...new Set(
+        entries.flatMap((e) => e.details?.rows?.map((r) => r.label) || []),
+      ),
+    ].map((label) => [
+      label,
+      ...entries.map(
+        (e) =>
+          e.details?.rows?.find((r) => r.label === label)?.value ||
+          "Not documented",
+      ),
+    ]),
     ...specFields.map((f) => [
       f.label,
       ...entries.map((e) => displaySpec(f.key, e.specs[f.key], imperial)),
@@ -233,6 +257,8 @@ export const allowedExtensions = [
   "png",
   "webp",
   "pdf",
+  "ppt",
+  "pptx",
   "step",
   "stp",
   "iges",
