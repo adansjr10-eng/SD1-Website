@@ -1,4 +1,4 @@
-# Launch and test RAIL LAB
+# Launch and test SixthGearSeniorDesign-PassengerBearingTester
 
 The cloud onboarding runtime can run the app for internal validation but does not expose a shareable browser preview. A local development server or a Next.js hosting deployment provides an interactive site where you can use your own Supabase administrator account. Use the GitHub repository as the source; environment files, build outputs, and dependencies are excluded from commits.
 

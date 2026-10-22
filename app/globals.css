@@ -122,6 +122,7 @@ svg {
   padding: 0 8px 29px;
 }
 .brand-icon {
+  flex-shrink: 0;
   height: 39px;
   width: 39px;
   background: var(--navy);
@@ -131,10 +132,12 @@ svg {
   border-radius: 9px;
 }
 .brand > div:last-child {
-  font-size: 23px;
-  font-weight: 800;
-  letter-spacing: 1.2px;
-  line-height: 1.1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: -0.2px;
+  line-height: 1.5;
 }
 .brand span {
   font-weight: 400;
@@ -2075,7 +2078,7 @@ th small {
     padding-left: 3px;
   }
   .brand > div:last-child {
-    font-size: 21px;
+    font-size: 10px;
   }
   .brand small {
     font-size: 5.8px;
@@ -2256,7 +2259,7 @@ th small {
     gap: 12px;
   }
   .brand > div:last-child {
-    font-size: 23px;
+    font-size: 11px;
   }
   .brand small {
     font-size: 6.8px;

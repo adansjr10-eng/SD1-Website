@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { explainBackendError } from "./backend-config";
+import { SITE_NAME } from "./site";
 export type SmokeCheck = { label: string; passed: boolean; detail: string };
 export type SmokeReport = {
   passed: boolean;
@@ -14,8 +15,7 @@ function requireSuccess(error: { code?: string; message?: string } | null) {
 }
 /** A real, renderable PDF. Offsets are byte-correct because all content is ASCII. */
 export function testPdf() {
-  const stream =
-    "BT /F1 12 Tf 36 80 Td (RAIL LAB temporary storage verification) Tj ET\n";
+  const stream = `BT /F1 9 Tf 24 100 Td (${SITE_NAME}) Tj 0 -20 Td (Temporary storage verification) Tj ET\n`;
   const objects = [
     "<< /Type /Catalog /Pages 2 0 R >>",
     "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",

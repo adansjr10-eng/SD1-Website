@@ -1,4 +1,4 @@
-# RAIL LAB
+# SixthGearSeniorDesign-PassengerBearingTester
 
 Passenger rail bearing tester and primary suspension engineering knowledge base, built with Next.js 16, React 19, TypeScript, Tailwind CSS 4, and Supabase.
 
