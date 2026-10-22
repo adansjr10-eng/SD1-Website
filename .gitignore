@@ -1,0 +1,12 @@
+node_modules/
+.next/
+.env*
+tsconfig.tsbuildinfo
+playwright-report/
+test-results/
+
+.vercel/
+
+# Generated Next.js declarations and local verification output
+next-env.d.ts
+*.log
