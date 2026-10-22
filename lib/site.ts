@@ -1,1 +1,1 @@
-export const SITE_NAME = "SixthGearSeniorDesign-PassengerBearingTester";
+export const SITE_NAME = "PBT";
