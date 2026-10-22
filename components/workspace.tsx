@@ -71,6 +71,7 @@ import {
   type Spec,
 } from "@/lib/data";
 import Diagram from "./diagram";
+import { SITE_NAME } from "@/lib/site";
 const nav = [
   { path: "/", label: "Overview", icon: LayoutDashboard },
   { path: "/testers", label: "Bearing testers", icon: Database },
@@ -481,12 +482,17 @@ export default function Workspace() {
   return (
     <div className="app-shell">
       <aside className={`sidebar ${mobile ? "open" : ""}`}>
-        <Link href="/" className="brand">
+        <Link
+          href="/"
+          className="brand"
+          aria-label={`${SITE_NAME} home`}
+          title={SITE_NAME}
+        >
           <div className="brand-icon">
             <TrainFront size={23} />
           </div>
           <div>
-            RAIL<span>LAB</span>
+            {SITE_NAME}
             <small>ENGINEERING KNOWLEDGE BASE</small>
           </div>
         </Link>
@@ -1598,7 +1604,7 @@ export default function Workspace() {
           )}
           <footer className="footer">
             <span>
-              RAIL LAB <i>/</i> Passenger Rail Engineering Research
+              {SITE_NAME} <i>/</i> Passenger Rail Engineering Research
             </span>
             <span>
               Senior Design Team <span className="footer-dot">·</span> A living

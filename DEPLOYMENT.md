@@ -1,4 +1,4 @@
-# Publish RAIL LAB with GitHub and Vercel
+# Publish SixthGearSeniorDesign-PassengerBearingTester with GitHub and Vercel
 
 Repository: [adansjr10-eng/SD1-Website](https://github.com/adansjr10-eng/SD1-Website).
 
@@ -8,7 +8,7 @@ No ZIP download, local installation, Supabase service-role key, or Vercel token 
 
 Review the `feat/rail-lab-vercel-deployment` branch's pull request and merge it into `main`. The branch includes the complete Next.js application, Supabase schema and policy files, tests, and deployment configuration. It is based on the existing `main` history; no force-push is needed.
 
-If a pull request could not be created automatically, visit the repository's **Pull requests → New pull request**, choose **base: main** and **compare: feat/rail-lab-vercel-deployment**, then create and review it. Use a title such as **Launch RAIL LAB research website with Supabase and Vercel**.
+If a pull request could not be created automatically, visit the repository's **Pull requests → New pull request**, choose **base: main** and **compare: feat/rail-lab-vercel-deployment**, then create and review it. Use a title such as **Launch SixthGearSeniorDesign-PassengerBearingTester research website with Supabase and Vercel**.
 
 ## 2. Import the repository into Vercel
 
