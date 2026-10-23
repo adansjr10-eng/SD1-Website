@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { inspectBackendConfiguration } from "./backend-config";
+import { hasInitialRecoveryCallback } from "./password-recovery";
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
 const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
 export const configuration = inspectBackendConfiguration(url, key);
@@ -7,6 +8,9 @@ export const configured = configuration.mode === "ready";
 export const hasConfiguration = configuration.mode !== "demo";
 export const supabase = configured
   ? createClient(url!, key!, {
+      // Recovery is exchanged explicitly by the gate, once, with visible errors.
+      // All other auth callback handling retains the SDK default behavior.
+      auth: { detectSessionInUrl: !hasInitialRecoveryCallback },
       global: {
         fetch: (input, init) =>
           fetch(input, {

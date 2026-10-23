@@ -3605,3 +3605,45 @@ th small {
   padding-left: 20px;
   margin-top: 15px;
 }
+
+.recovery-page {
+  min-height: 100vh;
+  padding: 36px 20px;
+  background: var(--bg, #f6f9fb);
+}
+.recovery-brand {
+  display: block;
+  max-width: 440px;
+  margin: 0 auto;
+  color: #19394e;
+  font-size: 25px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+}
+.recovery-panel {
+  margin-top: 24px;
+}
+.recovery-panel h1 {
+  font-size: 25px;
+  margin: 20px 0 12px;
+}
+.recovery-form > label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-bottom: 20px;
+  font-size: 13px;
+}
+.recovery-form > .button {
+  width: 100%;
+}
+.recovery-panel .form-error {
+  color: #a33232;
+}
+.recovery-panel .verification-success {
+  color: #23644e;
+}
+.recovery-back {
+  display: inline-flex;
+  margin-top: 24px;
+}

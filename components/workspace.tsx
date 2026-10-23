@@ -1762,9 +1762,12 @@ function Login({ onError }: { onError: (s: string) => void }) {
         {busy ? "Signing in…" : "Sign in to workspace"}
         <ArrowRight size={16} />
       </button>
+      <Link href="/forgot-password" className="text-link">
+        Forgot your password?
+      </Link>
       <small>
         Team accounts are provisioned by your administrator. Contact them for
-        access or password recovery.
+        access.
       </small>
     </form>
   );

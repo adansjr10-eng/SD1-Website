@@ -30,7 +30,7 @@ Vercel will build pull-request branches as preview deployments after its GitHub 
 
 ## 3. Finish Supabase authentication configuration
 
-In **Supabase → Authentication → URL Configuration**, set **Site URL** to your actual Vercel production URL. Add the exact callback/site URLs you use for invitations or password recovery to **Redirect URLs**. Only add preview URLs you intend to use for those flows. Existing email/password sign-in does not redirect through a callback.
+In **Supabase → Authentication → URL Configuration**, set **Site URL** to your actual Vercel production URL. Add the exact callback/site URLs you use for invitations or password recovery to **Redirect URLs**. Only add preview URLs you intend to use for those flows. Existing email/password sign-in does not redirect through a callback. For password recovery, allow the exact production `/reset-password` URL and follow [the recovery guide](docs/PASSWORD_RECOVERY.md).
 
 Confirm email/password authentication is enabled. Disable public account signup if the site should be invite-only. Your existing Supabase account and `members` admin role are reused: importing the website does not create new database users or reset memberships. A signed-in account without editor/admin membership cannot edit research.
 
