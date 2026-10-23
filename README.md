@@ -75,6 +75,8 @@ For a manual acceptance test, sign in as an editor, create a tester draft, enter
 
 For the dedicated progress page, review-draft import, milestone editing, and archive workflow, see [docs/PROJECT_PROGRESS.md](docs/PROJECT_PROGRESS.md).
 
+For Home/Overview descriptions, profile photos, selected imagery, and publication steps, see [docs/HOME_OVERVIEW.md](docs/HOME_OVERVIEW.md).
+
 ## Content management
 
 - **New entry** supports testers, bearing information, suspension, project sections, research notes, and project updates. Categories are editable free text with suggestions from existing entries; tags are comma separated.

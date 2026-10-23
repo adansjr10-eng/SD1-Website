@@ -3,6 +3,10 @@
 import { chromium } from "playwright";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import {
+  runPresentationChecks,
+  assertPublicPresentation,
+} from "./presentation-workflow.mjs";
 const browser = await chromium.launch({
   executablePath: process.env.CHROMIUM_PATH || "/usr/bin/chromium",
   headless: true,
@@ -146,6 +150,12 @@ try {
         };
         resources.push(resource);
         data = url.searchParams.has("select") ? { id: resource.id } : [];
+      } else if (method === "PATCH") {
+        const id = url.searchParams.get("id")?.slice(3);
+        resources = resources.map((r) =>
+          r.id === id ? { ...r, ...req.postDataJSON() } : r,
+        );
+        data = { id };
       } else if (method === "DELETE") {
         const id = url.searchParams.get("id")?.slice(3);
         resources = resources.filter((r) => r.id !== id);
@@ -676,6 +686,11 @@ try {
     fullPage: true,
   });
   await page.goto("http://localhost:3001/admin");
+  await runPresentationChecks(
+    page,
+    () => entries,
+    () => resources,
+  );
   memberRole = "viewer";
   await page.getByRole("button", { name: "Sign out", exact: true }).click();
   await page
@@ -704,7 +719,7 @@ try {
       .count(),
     0,
   );
-  await page.goto("http://localhost:3001/admin");
+  await assertPublicPresentation(page);
   await page.getByLabel("Email", { exact: true }).fill("team@example.test");
   await page.getByLabel("Password", { exact: true }).fill("test-only-password");
   await page.getByRole("button", { name: "Sign in to workspace" }).click();
@@ -723,7 +738,7 @@ try {
   );
   assert.deepEqual(errors, []);
   console.log(
-    "PASS: contract-mocked login, draft creation, editing, publication, multi-file upload requests, image preview and zoom, resource deletion, entry deletion, resource reload, private draft import and duplicate skips, progress filtering/editing/date ranges/archiving/linked uploads/mobile/privacy, configuration diagnostics, signed-in persistence verification, sign-out, and viewer access restrictions.",
+    "PASS: contract-mocked login, draft creation, editing, publication, multi-file upload requests, image preview and zoom, resource deletion, entry deletion, resource reload, private draft import and duplicate skips, progress filtering/editing/date ranges/archiving/linked uploads/mobile/privacy, Home/Overview/profile drafts and editing/approved image selection/gallery/tablet/publication gates, configuration diagnostics, signed-in persistence verification, sign-out, and viewer access restrictions.",
   );
 } finally {
   await browser.close();

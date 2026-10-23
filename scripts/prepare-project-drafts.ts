@@ -2,6 +2,10 @@
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { buildBriefBundle } from "../lib/brief-import";
 import { isProgressBrief, buildProgressBundle } from "../lib/progress-import";
+import {
+  isPresentationBrief,
+  buildPresentationBundle,
+} from "../lib/presentation-import";
 const source = process.argv[2];
 if (!source)
   throw new Error(
@@ -9,10 +13,17 @@ if (!source)
   );
 const text = readFileSync(source, "utf8");
 const progress = isProgressBrief(text);
-const bundle = progress ? buildProgressBundle(text) : buildBriefBundle(text);
-const output = progress
-  ? "private-imports/progress-drafts.json"
-  : "private-imports/project-drafts.json";
+const presentation = isPresentationBrief(text);
+const bundle = presentation
+  ? buildPresentationBundle(text)
+  : progress
+    ? buildProgressBundle(text)
+    : buildBriefBundle(text);
+const output = presentation
+  ? "private-imports/presentation-drafts.json"
+  : progress
+    ? "private-imports/progress-drafts.json"
+    : "private-imports/project-drafts.json";
 mkdirSync("private-imports", { recursive: true });
 writeFileSync(output, JSON.stringify(bundle, null, 2) + "\n");
 console.log(

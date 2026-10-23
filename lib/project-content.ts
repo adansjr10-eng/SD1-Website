@@ -1,5 +1,11 @@
 import type { Entry, Kind } from "./data";
 import {
+  validatePresentation,
+  validateProfile,
+  type PresentationDetails,
+  type ProfileDetails,
+} from "./presentation";
+import {
   validateProgress,
   validProgressDate,
   type ProgressDetails,
@@ -35,6 +41,8 @@ export type OptionRow = {
   reason: string;
 };
 export type ProjectDetails = {
+  presentation?: PresentationDetails;
+  profile?: ProfileDetails;
   stage?: string;
   objectives?: string[];
   rows?: TechnicalRow[];
@@ -55,6 +63,7 @@ export type ProjectDetails = {
 };
 export const projectSections = [
   { id: "overview", label: "Project Overview" },
+  { id: "home", label: "Home presentation" },
   { id: "engineering", label: "Engineering Design" },
   { id: "bearings", label: "Passenger Bearing Research" },
   { id: "suspension", label: "Primary Suspension Research" },
@@ -123,6 +132,8 @@ export function validateDetails(
   if (!value || typeof value !== "object" || Array.isArray(value))
     throw new Error("Structured content must be an object.");
   const d = value as ProjectDetails;
+  if (d.presentation !== undefined) validatePresentation(d.presentation);
+  if (d.profile !== undefined) validateProfile(d.profile);
   if (d.progress !== undefined) validateProgress(d.progress);
   if (
     d.event_end_date !== undefined &&

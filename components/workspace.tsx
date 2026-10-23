@@ -76,13 +76,14 @@ import {
   ReviewBadge,
   Provenance,
   StructuredEntry,
-  ProjectHome,
   ProjectSection,
   ReviewGuide,
 } from "./project-library";
 import ProjectEditor from "./project-editor";
 import PrivateImport from "./private-import";
 import ProjectProgress from "./project-progress";
+import ProjectPresentation from "./project-presentation";
+import TeamProfiles from "./team-profiles";
 import { progressTypes, type ProgressType } from "@/lib/progress";
 import SystemComparison from "./system-comparison";
 import {
@@ -872,10 +873,14 @@ export default function Workspace() {
               </div>
             )
           ) : section === "overview" ? (
-            <ProjectHome
+            <ProjectPresentation
+              mode="home"
               entries={entries}
               resources={resources}
-              renderTester={renderCard}
+              editable={editable}
+              onEdit={editable ? setEditor : undefined}
+              onUpload={editable ? startUpload : undefined}
+              onOpen={openResource}
             />
           ) : section === "comparison" ? (
             <SystemComparison
@@ -1307,6 +1312,48 @@ export default function Workspace() {
                 </>
               )}
             </>
+          ) : section === "project" ? (
+            <ProjectPresentation
+              mode="overview"
+              entries={entries}
+              resources={resources}
+              editable={editable}
+              onEdit={editable ? setEditor : undefined}
+              onUpload={editable ? startUpload : undefined}
+              onOpen={openResource}
+              onNewProfile={
+                editable && structuredEnabled
+                  ? () =>
+                      setEditor({
+                        ...blank("project", "team"),
+                        details: {
+                          profile: { group: "member", role: "", order: 0 },
+                        },
+                      })
+                  : undefined
+              }
+            />
+          ) : section === "team" ? (
+            <TeamProfiles
+              standalone
+              entries={entries}
+              resources={resources}
+              editable={editable}
+              onEdit={editable ? setEditor : undefined}
+              onUpload={editable ? startUpload : undefined}
+              onOpen={openResource}
+              onNewProfile={
+                editable && structuredEnabled
+                  ? () =>
+                      setEditor({
+                        ...blank("project", "team"),
+                        details: {
+                          profile: { group: "member", role: "", order: 0 },
+                        },
+                      })
+                  : undefined
+              }
+            />
           ) : section === "progress" ? (
             <ProjectProgress
               entries={entries}
@@ -1339,7 +1386,7 @@ export default function Workspace() {
                   : undefined
               }
             />
-          ) : ["engineering", "team", "calculations"].includes(section) ? (
+          ) : ["engineering", "calculations"].includes(section) ? (
             <ProjectSection
               key={section}
               section={section}
@@ -1594,6 +1641,8 @@ export default function Workspace() {
         <EntryEditor
           entry={editor}
           categories={entries.map((e) => e.category)}
+          resources={resources}
+          allEntries={entries}
           onSave={saveEntry}
           onClose={() => setEditor(null)}
           structuredEnabled={structuredEnabled}
@@ -1808,6 +1857,8 @@ function Login({ onError }: { onError: (s: string) => void }) {
 }
 function EntryEditor({
   entry,
+  resources,
+  allEntries,
   categories,
   onSave,
   onClose,
@@ -1815,6 +1866,8 @@ function EntryEditor({
 }: {
   entry: Entry;
   categories: string[];
+  resources: Resource[];
+  allEntries: Entry[];
   onSave: (e: Entry) => Promise<void>;
   onClose: () => void;
   structuredEnabled: boolean;
@@ -1991,6 +2044,8 @@ function EntryEditor({
         </div>
         {structuredEnabled && (
           <ProjectEditor
+            entries={allEntries}
+            resources={resources}
             entry={value}
             onChange={(changes) =>
               setValue((prev) => ({ ...prev, ...changes }))
