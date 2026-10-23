@@ -7,6 +7,10 @@ import {
   runPresentationChecks,
   assertPublicPresentation,
 } from "./presentation-workflow.mjs";
+import {
+  runTeamVideoChecks,
+  assertPublicTeamVideo,
+} from "./team-video-workflow.mjs";
 const browser = await chromium.launch({
   executablePath: process.env.CHROMIUM_PATH || "/usr/bin/chromium",
   headless: true,
@@ -691,6 +695,11 @@ try {
     () => entries,
     () => resources,
   );
+  await runTeamVideoChecks(
+    page,
+    () => entries,
+    () => resources,
+  );
   memberRole = "viewer";
   await page.getByRole("button", { name: "Sign out", exact: true }).click();
   await page
@@ -720,6 +729,7 @@ try {
     0,
   );
   await assertPublicPresentation(page);
+  await assertPublicTeamVideo(page);
   await page.getByLabel("Email", { exact: true }).fill("team@example.test");
   await page.getByLabel("Password", { exact: true }).fill("test-only-password");
   await page.getByRole("button", { name: "Sign in to workspace" }).click();
@@ -736,9 +746,35 @@ try {
       .count(),
     0,
   );
+  assert.equal(
+    await page
+      .getByRole("button", { name: "Manage introduction video", exact: true })
+      .count(),
+    0,
+  );
+  await page.goto("http://localhost:3001/project");
+  await page
+    .locator("#project-introduction-video")
+    .getByRole("heading", { name: "Team-only video title", exact: true })
+    .waitFor();
+  assert.equal(
+    await page
+      .getByRole("heading", {
+        name: "Unpublished replacement title",
+        exact: true,
+      })
+      .count(),
+    0,
+  );
+  assert.equal(
+    await page
+      .getByRole("button", { name: "Edit video section", exact: true })
+      .count(),
+    0,
+  );
   assert.deepEqual(errors, []);
   console.log(
-    "PASS: contract-mocked login, draft creation, editing, publication, multi-file upload requests, image preview and zoom, resource deletion, entry deletion, resource reload, private draft import and duplicate skips, progress filtering/editing/date ranges/archiving/linked uploads/mobile/privacy, Home/Overview/profile drafts and editing/approved image selection/gallery/tablet/publication gates, configuration diagnostics, signed-in persistence verification, sign-out, and viewer access restrictions.",
+    "PASS: contract-mocked login, draft creation, editing, publication, multi-file upload requests, image preview and zoom, resource deletion, entry deletion, resource reload, private draft import and duplicate skips, progress filtering/editing/date ranges/archiving/linked uploads/mobile/privacy, Home/Overview/profile drafts and editing/approved image selection/gallery/tablet/publication gates, introduction video placeholder/URL validation/preview/thumbnail/revisions/removal/disable/privacy/responsive layout, configuration diagnostics, signed-in persistence verification, sign-out, and viewer access restrictions.",
   );
 } finally {
   await browser.close();

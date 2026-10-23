@@ -84,6 +84,7 @@ import PrivateImport from "./private-import";
 import ProjectProgress from "./project-progress";
 import ProjectPresentation from "./project-presentation";
 import TeamProfiles from "./team-profiles";
+import { isTeamVideo, teamVideoDraft } from "@/lib/team-video";
 import { progressTypes, type ProgressType } from "@/lib/progress";
 import SystemComparison from "./system-comparison";
 import {
@@ -356,6 +357,16 @@ export default function Workspace() {
     setEditor(null);
     setNotice("Entry saved successfully.");
     await load();
+  }
+  function editEntry(entry: Entry) {
+    setEditor(
+      isTeamVideo(entry) && entry.status === "published"
+        ? teamVideoDraft(entries, entry)
+        : entry,
+    );
+  }
+  function editVideo() {
+    setEditor(teamVideoDraft(entries));
   }
   async function deleteEntry(entry: Entry) {
     if (
@@ -737,7 +748,7 @@ export default function Workspace() {
                   {editable && (
                     <button
                       className="button primary"
-                      onClick={() => setEditor(current)}
+                      onClick={() => editEntry(current)}
                     >
                       <Pencil size={16} />
                       Edit entry
@@ -1177,6 +1188,20 @@ export default function Workspace() {
               <BackendStatus editable={editable} />
               {editable && <AdminVerification />}
               {editable && <PrivateImport onDone={() => load(false)} />}
+              {editable && structuredEnabled && (
+                <section className="panel team-video-admin">
+                  <div>
+                    <h2>Project introduction video</h2>
+                    <p className="muted">
+                      Manage the Overview video, thumbnail, and Coming Soon
+                      section. Drafts can be previewed before publishing.
+                    </p>
+                  </div>
+                  <button className="button" onClick={editVideo}>
+                    Manage introduction video
+                  </button>
+                </section>
+              )}
               {editable && !structuredEnabled && (
                 <div className="alert">
                   Project content fields require the additive migration:
@@ -1290,7 +1315,7 @@ export default function Workspace() {
                           <button
                             className="icon-button"
                             aria-label={`Edit ${e.title}`}
-                            onClick={() => setEditor(e)}
+                            onClick={() => editEntry(e)}
                           >
                             <Pencil size={17} />
                           </button>
@@ -1321,6 +1346,9 @@ export default function Workspace() {
               onEdit={editable ? setEditor : undefined}
               onUpload={editable ? startUpload : undefined}
               onOpen={openResource}
+              onEditVideo={
+                editable && structuredEnabled ? editVideo : undefined
+              }
               onNewProfile={
                 editable && structuredEnabled
                   ? () =>
@@ -2035,6 +2063,7 @@ function EntryEditor({
           <label className="full">
             Summary
             <textarea
+              aria-label="Summary"
               rows={2}
               maxLength={1000}
               value={value.summary}

@@ -1,6 +1,8 @@
 "use client";
 import ProgressEditor from "./progress-editor";
 import PresentationEditor from "./presentation-editor";
+import TeamVideoEditor from "./team-video-editor";
+import { isTeamVideo } from "@/lib/team-video";
 import type { Entry, Resource } from "@/lib/data";
 import {
   projectSections,
@@ -29,6 +31,15 @@ export default function ProjectEditor({
     onChange({
       provenance: citations.map((c, j) => (j === i ? { ...c, ...changes } : c)),
     });
+  if (isTeamVideo(entry))
+    return (
+      <TeamVideoEditor
+        entry={entry}
+        entries={entries}
+        resources={resources}
+        onChange={onChange}
+      />
+    );
   return (
     <details className="spec-editor project-fields" open>
       <summary>Project structure, evidence & review status</summary>
