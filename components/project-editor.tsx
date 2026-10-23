@@ -1,4 +1,5 @@
 "use client";
+import ProgressEditor from "./progress-editor";
 import type { Entry } from "@/lib/data";
 import {
   projectSections,
@@ -106,6 +107,9 @@ export default function ProjectEditor({
           </select>
         </label>
       </div>
+      {entry.section === "progress" && (
+        <ProgressEditor details={details} onChange={setDetails} />
+      )}
       <h3>Source provenance</h3>
       <p className="muted">
         Use document names and page/slide/section locations. An internal

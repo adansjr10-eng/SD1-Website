@@ -73,6 +73,8 @@ For a manual acceptance test, sign in as an editor, create a tester draft, enter
 - **Networking:** allow the exact project API hostname in cloud environment settings, save changes, and publish. Draft saves alone do not apply network changes.
 - **Deployment:** set the root API URL and public key before rebuilding. Configure Supabase Site URL/redirect URLs and email delivery for actual invitation/password-recovery URLs when deploying.
 
+For the dedicated progress page, review-draft import, milestone editing, and archive workflow, see [docs/PROJECT_PROGRESS.md](docs/PROJECT_PROGRESS.md).
+
 ## Content management
 
 - **New entry** supports testers, bearing information, suspension, project sections, research notes, and project updates. Categories are editable free text with suggestions from existing entries; tags are comma separated.
