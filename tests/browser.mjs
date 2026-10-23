@@ -19,7 +19,16 @@ import assert from "node:assert/strict";
     })
     .waitFor();
   await page.screenshot({ path: "/tmp/rail-desktop.png", fullPage: true });
-  await page.getByRole("link", { name: "Open database", exact: true }).click();
+  await page
+    .getByRole("link", { name: "Explore Our Project", exact: true })
+    .waitFor();
+  await page
+    .getByRole("link", { name: "Meet the Team", exact: true })
+    .waitFor();
+  await page
+    .getByRole("navigation", { name: "Main navigation" })
+    .getByRole("link", { name: /^Existing Railway Testers/ })
+    .click();
   await page
     .getByRole("heading", { name: "Passenger bearing testers", exact: true })
     .waitFor();
@@ -93,7 +102,7 @@ import assert from "node:assert/strict";
   for (const [url, heading] of [
     ["/bearings", "Passenger Bearing Research"],
     ["/suspension", "Primary Suspension Research"],
-    ["/project", "Project Overview"],
+    ["/project", "Design and Development of a Passenger Rail Bearing Tester"],
     ["/engineering", "Engineering Design"],
     ["/progress", "Project Progress"],
     ["/team", "Our Team"],

@@ -2,6 +2,10 @@
 import { useState } from "react";
 import { Upload, FileText } from "lucide-react";
 import { buildBriefBundle } from "@/lib/brief-import";
+import {
+  isPresentationBrief,
+  buildPresentationBundle,
+} from "@/lib/presentation-import";
 import { isProgressBrief, buildProgressBundle } from "@/lib/progress-import";
 import { validateBundle, type ImportBundle } from "@/lib/project-content";
 import { supabase } from "@/lib/supabase";
@@ -23,9 +27,11 @@ export default function PrivateImport({
     try {
       const value = text.trim().startsWith("{")
         ? JSON.parse(text)
-        : isProgressBrief(text)
-          ? buildProgressBundle(text)
-          : buildBriefBundle(text);
+        : isPresentationBrief(text)
+          ? buildPresentationBundle(text)
+          : isProgressBrief(text)
+            ? buildProgressBundle(text)
+            : buildBriefBundle(text);
       validateBundle(value);
       setBundle(value);
     } catch (e) {
@@ -81,11 +87,11 @@ export default function PrivateImport({
         <FileText size={23} />
       </div>
       <p className="muted">
-        Paste the owner brief, a Project Progress brief, or a reviewed PBT JSON
-        bundle. Text is processed in your browser; it is not stored until you
-        import. Source PDFs/presentations are uploaded separately as team-only
-        documents. Public repository code contains no private brief or source
-        files.
+        Paste the owner brief, a Home/Overview or Project Progress brief, or a
+        reviewed PBT JSON bundle. Text is processed in your browser; it is not
+        stored until you import. Source PDFs/presentations are uploaded
+        separately as team-only documents. Public repository code contains no
+        private brief or source files.
       </p>
       <details>
         <summary>Open import preparation</summary>

@@ -1,6 +1,7 @@
 "use client";
 import ProgressEditor from "./progress-editor";
-import type { Entry } from "@/lib/data";
+import PresentationEditor from "./presentation-editor";
+import type { Entry, Resource } from "@/lib/data";
 import {
   projectSections,
   reviewStates,
@@ -12,8 +13,12 @@ import {
 export default function ProjectEditor({
   entry,
   onChange,
+  entries,
+  resources,
 }: {
   entry: Entry;
+  entries: Entry[];
+  resources: Resource[];
   onChange: (changes: Partial<Entry>) => void;
 }) {
   const details = entry.details || {},
@@ -109,6 +114,14 @@ export default function ProjectEditor({
       </div>
       {entry.section === "progress" && (
         <ProgressEditor details={details} onChange={setDetails} />
+      )}
+      {["home", "overview", "team"].includes(entry.section || "") && (
+        <PresentationEditor
+          entry={entry}
+          entries={entries}
+          resources={resources}
+          onChange={onChange}
+        />
       )}
       <h3>Source provenance</h3>
       <p className="muted">
