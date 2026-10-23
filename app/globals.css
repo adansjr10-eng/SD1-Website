@@ -5105,6 +5105,172 @@ th small {
   color: #8a7751;
   font-size: 10px;
 }
+
+.team-video-section {
+  scroll-margin-top: 90px;
+  padding: 30px;
+  border: 1px solid #dce6ef;
+  border-radius: 16px;
+  background: #fff;
+}
+.team-video-section .portfolio-section-heading p {
+  max-width: 720px;
+}
+.team-video-section .eyebrow {
+  text-transform: uppercase;
+}
+.team-video-frame {
+  position: relative;
+  width: 100%;
+  max-width: 960px;
+  aspect-ratio: 16 / 9;
+  margin: 0 auto;
+  overflow: hidden;
+  border: 1px solid #dce6ef;
+  border-radius: 12px;
+  background: #eef4f8;
+}
+.team-video-frame iframe,
+.team-video-frame img,
+.team-video-poster {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+.team-video-frame img {
+  object-fit: cover;
+}
+.team-video-placeholder {
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #f5f9fc, #e5eff6);
+}
+.team-video-placeholder > img {
+  opacity: 0.12;
+}
+.team-video-placeholder-copy {
+  position: relative;
+  max-width: 540px;
+  padding: 24px;
+  text-align: center;
+}
+.team-video-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 60px;
+  height: 60px;
+  border: 1px solid #c9dbe8;
+  border-radius: 50%;
+  color: #244c68;
+  background: #fff;
+}
+.team-video-placeholder h3 {
+  margin: 18px 0 10px;
+  color: #193b53;
+  font-size: clamp(15px, 1.6vw, 23px);
+  line-height: 1.4;
+}
+.team-video-placeholder p {
+  margin: 0;
+  color: #4e677b;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.team-video-poster {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  cursor: pointer;
+  color: #fff;
+  background: #193b53;
+  font: inherit;
+}
+.team-video-poster > img {
+  opacity: 0.65;
+}
+.team-video-poster > span {
+  position: relative;
+}
+.team-video-poster > span:last-child {
+  padding: 6px 14px;
+  border-radius: 6px;
+  background: #193b53;
+}
+.team-video-poster:hover .team-video-icon,
+.team-video-poster:focus-visible .team-video-icon {
+  background: #dcecf7;
+}
+.team-video-watch {
+  display: flex;
+  width: fit-content;
+  margin: 14px auto 0;
+}
+.team-video-manage {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-top: 12px;
+}
+.team-video-home-link {
+  display: flex;
+  width: fit-content;
+  margin-top: 18px;
+}
+.team-video-admin {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin: 18px 0;
+  padding: 24px;
+}
+.team-video-admin h2 {
+  color: #193b53;
+  font-size: 20px;
+  margin: 0 0 8px;
+}
+.team-video-admin p {
+  margin: 0;
+  max-width: 640px;
+}
+.team-video-admin button {
+  flex-shrink: 0;
+}
+.team-video-editor-preview {
+  margin-top: 18px;
+}
+@media (max-width: 640px) {
+  .team-video-section {
+    padding: 20px 14px;
+  }
+  .team-video-placeholder-copy {
+    padding: 10px;
+  }
+  .team-video-icon {
+    width: 38px;
+    height: 38px;
+  }
+  .team-video-icon svg {
+    width: 19px;
+    height: 19px;
+  }
+  .team-video-placeholder h3 {
+    margin: 8px 0 6px;
+    font-size: 14px;
+  }
+  .team-video-placeholder p {
+    font-size: 11px;
+    line-height: 1.45;
+  }
+  .team-video-admin {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
 .portfolio-page p,
 .portfolio-page h1,
 .portfolio-page h3,

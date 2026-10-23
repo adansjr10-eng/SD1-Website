@@ -28,6 +28,8 @@ import { ActivityBadge } from "./progress-record";
 import TeamProfiles, { type ProfileActions } from "./team-profiles";
 import PresentationImage from "./presentation-image";
 import { Provenance } from "./project-library";
+import TeamIntroductionVideo from "./team-introduction-video";
+import { teamVideoEntry } from "@/lib/team-video";
 const functionIcons = [RotateCw, ArrowDown, Layers3, Activity, Wrench];
 const fallbackFunctions = [
   "Controlled bearing rotation",
@@ -82,12 +84,14 @@ export default function ProjectPresentation({
   onEdit,
   onUpload,
   onNewProfile,
+  onEditVideo,
   onOpen,
   editable = false,
 }: {
   mode: "home" | "overview";
   entries: Entry[];
   resources: Resource[];
+  onEditVideo?: () => void;
 } & ProfileActions) {
   const home = mode === "home",
     entry = presentationEntry(entries, mode, editable),
@@ -97,6 +101,7 @@ export default function ProjectPresentation({
   const hero = approvedImage(p?.hero_image_id, resources, entries, editable);
   const bogie = approvedImage(p?.bogie_image_id, resources, entries, editable);
   const updates = featuredProgress(entries, p?.featured_update_ids);
+  const video = teamVideoEntry(entries, editable);
   const gallery = (p?.gallery_image_ids || [])
     .map((id) => approvedImage(id, resources, entries, editable))
     .filter((r): r is Resource => Boolean(r));
@@ -294,6 +299,14 @@ export default function ProjectPresentation({
                 Meet the team
                 <ArrowRight size={14} />
               </Link>
+              {video?.details?.team_video?.enabled !== false && (
+                <Link
+                  href="/project#project-introduction-video"
+                  className="text-link team-video-home-link"
+                >
+                  Project introduction video <ArrowRight size={14} />
+                </Link>
+              )}
             </div>
           </section>
         </>
@@ -438,6 +451,33 @@ export default function ProjectPresentation({
             )}
           </section>
           {progressPreview(4)}
+          <div className="team-video-block">
+            {editable && video?.status === "draft" && (
+              <p className="portfolio-preview-note">
+                Editorial video preview · this draft is not published.
+              </p>
+            )}
+            <TeamIntroductionVideo
+              entry={video}
+              entries={entries}
+              resources={resources}
+              editable={editable}
+            />
+            {onEditVideo && (
+              <div className="team-video-manage">
+                {video?.details?.team_video?.enabled === false && (
+                  <span className="muted">Video section disabled</span>
+                )}
+                <button
+                  type="button"
+                  className="text-button"
+                  onClick={onEditVideo}
+                >
+                  Edit video section
+                </button>
+              </div>
+            )}
+          </div>
           <TeamProfiles
             entries={entries}
             resources={resources}

@@ -77,6 +77,8 @@ For the dedicated progress page, review-draft import, milestone editing, and arc
 
 For Home/Overview descriptions, profile photos, selected imagery, and publication steps, see [docs/HOME_OVERVIEW.md](docs/HOME_OVERVIEW.md).
 
+For the editable Project Overview introduction video, Coming Soon placeholder, and thumbnail/publication workflow, see [docs/TEAM_VIDEO.md](docs/TEAM_VIDEO.md).
+
 ## Content management
 
 - **New entry** supports testers, bearing information, suspension, project sections, research notes, and project updates. Categories are editable free text with suggestions from existing entries; tags are comma separated.

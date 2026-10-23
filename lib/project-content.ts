@@ -1,4 +1,5 @@
 import type { Entry, Kind } from "./data";
+import { validateTeamVideo, type TeamVideoDetails } from "./team-video";
 import {
   validatePresentation,
   validateProfile,
@@ -41,6 +42,7 @@ export type OptionRow = {
   reason: string;
 };
 export type ProjectDetails = {
+  team_video?: TeamVideoDetails;
   presentation?: PresentationDetails;
   profile?: ProfileDetails;
   stage?: string;
@@ -64,6 +66,7 @@ export type ProjectDetails = {
 export const projectSections = [
   { id: "overview", label: "Project Overview" },
   { id: "home", label: "Home presentation" },
+  { id: "introduction-video", label: "Project introduction video" },
   { id: "engineering", label: "Engineering Design" },
   { id: "bearings", label: "Passenger Bearing Research" },
   { id: "suspension", label: "Primary Suspension Research" },
@@ -132,6 +135,7 @@ export function validateDetails(
   if (!value || typeof value !== "object" || Array.isArray(value))
     throw new Error("Structured content must be an object.");
   const d = value as ProjectDetails;
+  if (d.team_video !== undefined) validateTeamVideo(d.team_video);
   if (d.presentation !== undefined) validatePresentation(d.presentation);
   if (d.profile !== undefined) validateProfile(d.profile);
   if (d.progress !== undefined) validateProgress(d.progress);
