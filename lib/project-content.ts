@@ -1,4 +1,9 @@
 import type { Entry, Kind } from "./data";
+import {
+  validateProgress,
+  validProgressDate,
+  type ProgressDetails,
+} from "./progress";
 export const reviewStates = [
   "confirmed",
   "preliminary",
@@ -43,6 +48,8 @@ export type ProjectDetails = {
   }[];
   people?: { name: string; role: string }[];
   event_date?: string;
+  event_end_date?: string;
+  progress?: ProgressDetails;
   calculation?: "wheel-rpm";
   [key: string]: unknown;
 };
@@ -85,7 +92,7 @@ export function entrySection(e: Entry) {
   );
 }
 export function entryHref(e: Entry) {
-  return `/${e.kind === "tester" ? "testers" : e.kind === "bearing" ? "bearings" : e.kind === "suspension" ? "suspension" : e.kind === "update" ? "progress" : e.section === "engineering" ? "engineering" : e.section === "team" ? "team" : e.section === "calculations" ? "calculations" : e.kind === "project" ? "project" : "research"}/${e.id}`;
+  return `/${e.kind === "tester" ? "testers" : e.kind === "bearing" ? "bearings" : e.kind === "suspension" ? "suspension" : e.kind === "update" || e.section === "progress" ? "progress" : e.section === "engineering" ? "engineering" : e.section === "team" ? "team" : e.section === "calculations" ? "calculations" : e.kind === "project" ? "project" : "research"}/${e.id}`;
 }
 export function wheelRpm(mph: number, diameterInches: number) {
   if (
@@ -116,6 +123,22 @@ export function validateDetails(
   if (!value || typeof value !== "object" || Array.isArray(value))
     throw new Error("Structured content must be an object.");
   const d = value as ProjectDetails;
+  if (d.progress !== undefined) validateProgress(d.progress);
+  if (
+    d.event_end_date !== undefined &&
+    (!validProgressDate(d.event_end_date) ||
+      !d.event_date ||
+      d.event_end_date < d.event_date)
+  )
+    throw new Error(
+      "Use a valid milestone end date on or after its start date.",
+    );
+  if (
+    d.progress &&
+    d.event_date !== undefined &&
+    !validProgressDate(d.event_date)
+  )
+    throw new Error("Use a valid milestone start date.");
   if (d.stage !== undefined && typeof d.stage !== "string")
     throw new Error("Development stage must be text.");
   if (

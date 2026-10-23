@@ -82,6 +82,8 @@ import {
 } from "./project-library";
 import ProjectEditor from "./project-editor";
 import PrivateImport from "./private-import";
+import ProjectProgress from "./project-progress";
+import { progressTypes, type ProgressType } from "@/lib/progress";
 import SystemComparison from "./system-comparison";
 import {
   entryHref,
@@ -197,6 +199,11 @@ export default function Workspace() {
   const [imperial, setImperial] = useState(false);
   const [editor, setEditor] = useState<Entry | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadTarget, setUploadTarget] = useState("");
+  function startUpload(entryId = "") {
+    setUploadTarget(entryId);
+    setUploading(true);
+  }
   const [resourceEdit, setResourceEdit] = useState<Resource | null>(null);
   const [preview, setPreview] = useState<{
     url: string;
@@ -827,10 +834,7 @@ export default function Workspace() {
                   <div className="panel-heading">
                     <h2>Images & attachments</h2>
                     {editable && (
-                      <button
-                        className="button"
-                        onClick={() => setUploading(true)}
-                      >
+                      <button className="button" onClick={() => startUpload()}>
                         <Upload size={15} />
                         Upload files
                       </button>
@@ -1045,7 +1049,7 @@ export default function Workspace() {
                   className="button primary"
                   onClick={() =>
                     editable
-                      ? setUploading(true)
+                      ? startUpload()
                       : setNotice(
                           configured
                             ? "Sign in with an authorized team account to upload files."
@@ -1230,10 +1234,7 @@ export default function Workspace() {
                       <Plus size={16} />
                       New entry
                     </button>
-                    <button
-                      className="button"
-                      onClick={() => setUploading(true)}
-                    >
+                    <button className="button" onClick={() => startUpload()}>
                       <Upload size={16} />
                       Upload files
                     </button>
@@ -1306,9 +1307,39 @@ export default function Workspace() {
                 </>
               )}
             </>
-          ) : ["engineering", "progress", "team", "calculations"].includes(
-              section,
-            ) ? (
+          ) : section === "progress" ? (
+            <ProjectProgress
+              entries={entries}
+              resources={resources}
+              renderResource={renderResource}
+              onEdit={editable ? setEditor : undefined}
+              onUpload={editable ? startUpload : undefined}
+              onNew={
+                editable && structuredEnabled
+                  ? (type: ProgressType) => {
+                      const entry = blank(
+                        ["milestone", "bogie"].includes(type)
+                          ? "update"
+                          : "project",
+                        "progress",
+                      );
+                      setEditor({
+                        ...entry,
+                        title: type === "milestone" ? "" : progressTypes[type],
+                        ...(structuredEnabled
+                          ? {
+                              details: {
+                                ...entry.details,
+                                progress: { type, status: "pending" },
+                              },
+                            }
+                          : {}),
+                      });
+                    }
+                  : undefined
+              }
+            />
+          ) : ["engineering", "team", "calculations"].includes(section) ? (
             <ProjectSection
               key={section}
               section={section}
@@ -1353,7 +1384,9 @@ export default function Workspace() {
                   .filter((e) =>
                     section === "project"
                       ? e.kind === "project" &&
-                        !["engineering", "team"].includes(e.section || "")
+                        !["engineering", "team", "progress"].includes(
+                          e.section || "",
+                        )
                       : section === "research"
                         ? ["bearing", "suspension", "research"].includes(
                             e.kind,
@@ -1568,6 +1601,7 @@ export default function Workspace() {
       )}
       {uploading && (
         <UploadDialog
+          defaultEntryId={uploadTarget}
           entries={entries}
           structuredEnabled={structuredEnabled}
           onClose={() => setUploading(false)}
@@ -2097,11 +2131,13 @@ function EntryEditor({
 }
 function UploadDialog({
   entries,
+  defaultEntryId,
   structuredEnabled,
   onClose,
   onDone,
 }: {
   entries: Entry[];
+  defaultEntryId?: string;
   structuredEnabled: boolean;
   onClose: () => void;
   onDone: () => Promise<void>;
@@ -2200,6 +2236,7 @@ function UploadDialog({
         ))}
         <AttachmentFields
           entries={entries}
+          defaultEntryId={defaultEntryId}
           structuredEnabled={structuredEnabled}
         />
         {error && (
@@ -2222,10 +2259,12 @@ function UploadDialog({
 function AttachmentFields({
   entries,
   resource,
+  defaultEntryId,
   structuredEnabled,
 }: {
   entries: Entry[];
   resource?: Resource;
+  defaultEntryId?: string;
   structuredEnabled: boolean;
 }) {
   return (
@@ -2284,7 +2323,10 @@ function AttachmentFields({
       )}
       <label>
         Related research entry
-        <select name="entry_id" defaultValue={resource?.entry_id || ""}>
+        <select
+          name="entry_id"
+          defaultValue={resource?.entry_id || defaultEntryId || ""}
+        >
           <option value="">General library</option>
           {entries.map((e) => (
             <option value={e.id} key={e.id}>

@@ -11,6 +11,8 @@ import {
   Layers3,
 } from "lucide-react";
 import type { Entry, Resource } from "@/lib/data";
+import { isArchived, progressStatus, progressDate } from "@/lib/progress";
+import { ActivityBadge, ProgressRecordFields } from "./progress-record";
 import {
   reviewLabels,
   entryHref,
@@ -67,6 +69,16 @@ export function StructuredEntry({ entry }: { entry: Entry }) {
   const d = entry.details || {};
   return (
     <div className="structured-entry">
+      {d.progress && (
+        <section className="progress-record">
+          <ActivityBadge status={progressStatus(entry)} />
+          <p>
+            Source as of {d.progress.as_of || "date not recorded"}
+            {d.event_date ? ` · ${progressDate(entry)}` : ""}
+          </p>
+          <ProgressRecordFields entry={entry} />
+        </section>
+      )}
       {d.rows?.length ? (
         <section>
           <h2>Specification & requirement register</h2>
@@ -409,7 +421,7 @@ export function ProjectHome({
         e.id !== "project-overview",
     );
   const milestones = entries
-    .filter((e) => e.kind === "update" && !e.demo)
+    .filter((e) => e.kind === "update" && !e.demo && !isArchived(e))
     .sort((a, b) =>
       (b.details?.event_date || "").localeCompare(a.details?.event_date || ""),
     )

@@ -2,6 +2,7 @@
 // Start a separate dev server with the documented test-only public variables.
 import { chromium } from "playwright";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 const browser = await chromium.launch({
   executablePath: process.env.CHROMIUM_PATH || "/usr/bin/chromium",
   headless: true,
@@ -473,6 +474,208 @@ try {
     })
     .waitFor();
   await page.goto("http://localhost:3001/admin");
+  await page.getByText("Open import preparation", { exact: true }).click();
+  await page
+    .getByLabel("Owner brief or reviewed bundle", { exact: true })
+    .fill(readFileSync("tests/fixtures/progress-brief.md", "utf8"));
+  await page
+    .getByRole("button", { name: "Preview draft plan", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Import 7 team-only drafts", exact: true })
+    .click();
+  await page
+    .getByText(
+      "7 team-only drafts inserted; 0 existing import keys skipped. Nothing was published.",
+      { exact: true },
+    )
+    .waitFor();
+  await page
+    .getByRole("button", { name: "Import 7 team-only drafts", exact: true })
+    .click();
+  await page
+    .getByText(
+      "0 team-only drafts inserted; 7 existing import keys skipped. Nothing was published.",
+      { exact: true },
+    )
+    .waitFor();
+  assert.equal(entries.filter((e) => e.section === "progress").length, 7);
+  assert.ok(
+    entries
+      .filter((e) => e.section === "progress")
+      .every((e) => e.status === "draft" && e.visibility === "team"),
+  );
+  await page.goto("http://localhost:3001/progress");
+  await page
+    .getByRole("heading", {
+      name: "Synthetic Development Progress",
+      exact: true,
+    })
+    .waitFor();
+  assert.equal(await page.locator(".progress-milestones > li").count(), 2);
+  await page
+    .getByRole("rowheader", {
+      name: "Synthetic support arrangement",
+      exact: true,
+    })
+    .waitFor();
+  assert.equal(await page.locator(".progress-tasks li").count(), 2);
+  await page
+    .getByLabel("Filter milestones", { exact: true })
+    .selectOption("completed");
+  assert.equal(await page.locator(".progress-milestones > li").count(), 1);
+  await page
+    .getByLabel("Filter milestones", { exact: true })
+    .selectOption("in-progress");
+  assert.equal(await page.locator(".progress-milestones > li").count(), 1);
+  await page.getByLabel("Filter milestones", { exact: true }).selectOption("");
+  await page
+    .getByRole("button", {
+      name: "Edit Synthetic Development Progress",
+      exact: true,
+    })
+    .click();
+  await page
+    .getByLabel("Current focus", { exact: true })
+    .fill("Editor-reviewed synthetic focus.");
+  await page.getByRole("button", { name: "Save draft", exact: true }).click();
+  await page.getByText("Entry saved successfully.", { exact: true }).waitFor();
+  await page.reload();
+  await page
+    .getByText("Editor-reviewed synthetic focus.", { exact: true })
+    .waitFor();
+  await page
+    .getByRole("button", { name: "Edit Synthetic initial review", exact: true })
+    .click();
+  await page
+    .getByLabel("Archive this progress record", { exact: true })
+    .check();
+  await page.getByRole("button", { name: "Save draft", exact: true }).click();
+  await page.getByText("Entry saved successfully.", { exact: true }).waitFor();
+  assert.equal(await page.locator(".progress-milestones > li").count(), 1);
+  await page.getByLabel(/Show archived updates/).check();
+  assert.equal(await page.locator(".progress-milestones > li").count(), 2);
+  assert.equal(entries.filter((e) => e.section === "progress").length, 7);
+  await page
+    .getByRole("button", { name: "Edit Synthetic initial review", exact: true })
+    .click();
+  await page
+    .getByLabel("Archive this progress record", { exact: true })
+    .uncheck();
+  await page
+    .getByLabel("Milestone / activity date", { exact: true })
+    .fill("2025-01-05");
+  await page
+    .getByLabel("Milestone end date", { exact: true })
+    .fill("2025-01-11");
+  await page
+    .getByLabel("Activity status", { exact: true })
+    .selectOption("completed");
+  await page.getByLabel("Publication status").selectOption("published");
+  await page.getByLabel("Visibility").selectOption("public");
+  await page
+    .getByRole("button", { name: "Save & publish", exact: true })
+    .click();
+  await page.getByText("Entry saved successfully.", { exact: true }).waitFor();
+  const publishedProgress = entries.find(
+    (e) => e.title === "Synthetic initial review",
+  );
+  assert.equal(publishedProgress.details.event_date, "2025-01-05");
+  assert.equal(publishedProgress.details.event_end_date, "2025-01-11");
+  const milestone = page.locator(".progress-milestone").filter({
+    has: page.getByRole("heading", {
+      name: "Synthetic concept development",
+      exact: true,
+    }),
+  });
+  await milestone
+    .getByRole("button", { name: "Attach progress files", exact: true })
+    .click();
+  const target = entries.find(
+    (e) => e.title === "Synthetic concept development",
+  );
+  assert.equal(
+    await page.getByLabel("Related research entry").inputValue(),
+    target.id,
+  );
+  await page.getByLabel("Choose files", { exact: true }).setInputFiles([
+    {
+      name: "progress.png",
+      mimeType: "image/png",
+      buffer: Buffer.from(
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jL1sAAAAASUVORK5CYII=",
+        "base64",
+      ),
+    },
+    {
+      name: "progress.pdf",
+      mimeType: "application/pdf",
+      buffer: Buffer.from("%PDF-1.4\nSynthetic progress fixture"),
+    },
+  ]);
+  await page
+    .getByLabel("Caption / description", { exact: true })
+    .fill("Synthetic progress caption");
+  await page
+    .getByRole("button", { name: "Upload to storage", exact: true })
+    .click();
+  await page
+    .getByText("Files uploaded to persistent storage.", { exact: true })
+    .waitFor();
+  assert.equal(resources.filter((r) => r.entry_id === target.id).length, 2);
+  await page.reload();
+  await milestone
+    .getByText("Accomplishments, design notes & evidence", { exact: true })
+    .click();
+  await milestone.getByText("progress.pdf", { exact: true }).waitFor();
+  await milestone
+    .getByRole("button", { name: "Preview progress.png", exact: true })
+    .click();
+  await page
+    .getByRole("dialog", { name: "progress.png", exact: true })
+    .waitFor();
+  await page.getByRole("button", { name: "Close dialog", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Add milestone", exact: true })
+    .click();
+  await page.getByLabel("Title", { exact: true }).fill("Synthetic future task");
+  await page
+    .getByLabel("Milestone / activity date", { exact: true })
+    .fill("2025-02-03");
+  await page
+    .getByLabel("Milestone end date", { exact: true })
+    .fill("2025-02-07");
+  await page
+    .getByLabel("Activity status", { exact: true })
+    .selectOption("planned");
+  await page
+    .getByLabel("Key accomplishments and design notes (one per line)", {
+      exact: true,
+    })
+    .fill("A future synthetic review, not a completed test.");
+  await page.getByRole("button", { name: "Save draft", exact: true }).click();
+  await page.getByText("Entry saved successfully.", { exact: true }).waitFor();
+  assert.equal(
+    entries.find((e) => e.title === "Synthetic future task").details.progress
+      .status,
+    "planned",
+  );
+  await page.setViewportSize({ width: 390, height: 844 });
+  assert.ok(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  );
+  await page.screenshot({
+    path: "/tmp/pbt-progress-mobile.png",
+    fullPage: true,
+  });
+  await page.setViewportSize({ width: 1440, height: 1080 });
+  await page.screenshot({
+    path: "/tmp/pbt-progress-desktop.png",
+    fullPage: true,
+  });
+  await page.goto("http://localhost:3001/admin");
   memberRole = "viewer";
   await page.getByRole("button", { name: "Sign out", exact: true }).click();
   await page
@@ -482,6 +685,26 @@ try {
     await page.getByRole("button", { name: "New entry", exact: true }).count(),
     0,
   );
+  await page.goto("http://localhost:3001/progress");
+  await page
+    .getByRole("heading", { name: "Synthetic initial review", exact: true })
+    .waitFor();
+  assert.equal(
+    await page
+      .getByRole("heading", {
+        name: "Synthetic concept development",
+        exact: true,
+      })
+      .count(),
+    0,
+  );
+  assert.equal(
+    await page
+      .getByRole("button", { name: "Add milestone", exact: true })
+      .count(),
+    0,
+  );
+  await page.goto("http://localhost:3001/admin");
   await page.getByLabel("Email", { exact: true }).fill("team@example.test");
   await page.getByLabel("Password", { exact: true }).fill("test-only-password");
   await page.getByRole("button", { name: "Sign in to workspace" }).click();
@@ -500,7 +723,7 @@ try {
   );
   assert.deepEqual(errors, []);
   console.log(
-    "PASS: contract-mocked login, draft creation, editing, publication, multi-file upload requests, image preview and zoom, resource deletion, entry deletion, resource reload, private draft import and duplicate skips, configuration diagnostics, signed-in persistence verification, sign-out, and viewer access restrictions.",
+    "PASS: contract-mocked login, draft creation, editing, publication, multi-file upload requests, image preview and zoom, resource deletion, entry deletion, resource reload, private draft import and duplicate skips, progress filtering/editing/date ranges/archiving/linked uploads/mobile/privacy, configuration diagnostics, signed-in persistence verification, sign-out, and viewer access restrictions.",
   );
 } finally {
   await browser.close();

@@ -2,9 +2,11 @@
 import { useState } from "react";
 import { Upload, FileText } from "lucide-react";
 import { buildBriefBundle } from "@/lib/brief-import";
+import { isProgressBrief, buildProgressBundle } from "@/lib/progress-import";
 import { validateBundle, type ImportBundle } from "@/lib/project-content";
 import { supabase } from "@/lib/supabase";
 import { ReviewBadge } from "./project-library";
+import { ActivityBadge } from "./progress-record";
 export default function PrivateImport({
   onDone,
 }: {
@@ -21,7 +23,9 @@ export default function PrivateImport({
     try {
       const value = text.trim().startsWith("{")
         ? JSON.parse(text)
-        : buildBriefBundle(text);
+        : isProgressBrief(text)
+          ? buildProgressBundle(text)
+          : buildBriefBundle(text);
       validateBundle(value);
       setBundle(value);
     } catch (e) {
@@ -77,10 +81,11 @@ export default function PrivateImport({
         <FileText size={23} />
       </div>
       <p className="muted">
-        Paste the owner brief or a reviewed PBT JSON bundle. Text is processed
-        in your browser; it is not stored until you import. Source
-        PDFs/presentations are uploaded separately as team-only documents.
-        Public repository code contains no private brief or source files.
+        Paste the owner brief, a Project Progress brief, or a reviewed PBT JSON
+        bundle. Text is processed in your browser; it is not stored until you
+        import. Source PDFs/presentations are uploaded separately as team-only
+        documents. Public repository code contains no private brief or source
+        files.
       </p>
       <details>
         <summary>Open import preparation</summary>
@@ -125,7 +130,7 @@ export default function PrivateImport({
                   <tr>
                     <th>Record</th>
                     <th>Section</th>
-                    <th>Review state</th>
+                    <th>Review / activity state</th>
                     <th>Visibility</th>
                   </tr>
                 </thead>
@@ -135,7 +140,13 @@ export default function PrivateImport({
                       <td>{e.title}</td>
                       <td>{e.section}</td>
                       <td>
-                        <ReviewBadge state={e.review_state} />
+                        {e.details?.progress ? (
+                          <ActivityBadge
+                            status={e.details.progress.status || "pending"}
+                          />
+                        ) : (
+                          <ReviewBadge state={e.review_state} />
+                        )}
                       </td>
                       <td>Team-only draft</td>
                     </tr>
